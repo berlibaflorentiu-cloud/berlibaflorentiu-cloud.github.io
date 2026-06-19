@@ -3129,41 +3129,54 @@
 </button>
 <div id="vf-tooltip">Cine suntem</div>
 
-<video id="vf-video" src="intro-video.mp4" controls playsinline preload="none" style="display:none"></video>
-<audio id="vf-audio" src="intro-audio.mp3" preload="none"></audio>
-
 <script>
 (function(){
   var btn = document.getElementById('vf-btn');
-  var vid = document.getElementById('vf-video');
-  var aud = document.getElementById('vf-audio');
+  var aud = new Audio('intro-audio.mp3');
+  var vid = null;
+
+  function cleanup(){
+    aud.pause();
+    aud.currentTime = 0;
+    if(vid){
+      vid.pause();
+      document.body.removeChild(vid);
+      vid = null;
+    }
+  }
 
   btn.addEventListener('click', function(){
-    vid.currentTime = 0;
-    aud.currentTime = 0;
+    cleanup();
+
+    vid = document.createElement('video');
+    vid.src = 'intro-video.mp4';
+    vid.controls = true;
+    vid.playsInline = true;
+    vid.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:#000;z-index:99999;';
+    document.body.appendChild(vid);
 
     var fs = vid.requestFullscreen || vid.webkitRequestFullscreen || vid.mozRequestFullScreen;
     if(fs){
-      fs.call(vid);
+      fs.call(vid).then(function(){
+        vid.play();
+        aud.play().catch(function(){});
+      }).catch(function(){
+        vid.play();
+        aud.play().catch(function(){});
+      });
+    } else {
+      vid.play();
+      aud.play().catch(function(){});
     }
-    vid.play();
-    aud.play().catch(function(){});
-  });
 
-  // stop audio when video exits fullscreen or ends
-  function stopAll(){
-    vid.pause();
-    aud.pause();
-    vid.currentTime = 0;
-    aud.currentTime = 0;
-  }
+    vid.addEventListener('ended', cleanup);
 
-  vid.addEventListener('ended', stopAll);
-  document.addEventListener('fullscreenchange', function(){
-    if(!document.fullscreenElement) stopAll();
-  });
-  document.addEventListener('webkitfullscreenchange', function(){
-    if(!document.webkitFullscreenElement) stopAll();
+    document.addEventListener('fullscreenchange', function onFSChange(){
+      if(!document.fullscreenElement){ cleanup(); document.removeEventListener('fullscreenchange', onFSChange); }
+    });
+    document.addEventListener('webkitfullscreenchange', function onWKChange(){
+      if(!document.webkitFullscreenElement){ cleanup(); document.removeEventListener('webkitfullscreenchange', onWKChange); }
+    });
   });
 })();
 </script>
