@@ -3150,9 +3150,10 @@
 
     vid = document.createElement('video');
     vid.src = 'intro-video.mp4';
-    vid.controls = true;
     vid.playsInline = true;
-    vid.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:#000;z-index:99999;';
+    vid.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:#000;z-index:99999;object-fit:contain;cursor:pointer;';
+    vid.title = 'Click to close';
+    vid.addEventListener('click', cleanup);
     document.body.appendChild(vid);
 
     var fs = vid.requestFullscreen || vid.webkitRequestFullscreen || vid.mozRequestFullScreen;
