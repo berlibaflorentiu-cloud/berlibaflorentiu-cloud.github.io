@@ -3074,5 +3074,126 @@
   })();
 </script>
 <script src="i18n.js?v=66270367"></script>
+
+<!-- ── Video float button + modal ── -->
+<style>
+  #vf-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 8000;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  #vf-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.22); }
+  #vf-btn svg { width: 22px; height: 22px; fill: #fff; margin-left: 3px; }
+
+  #vf-tooltip {
+    position: fixed;
+    bottom: 38px;
+    right: 100px;
+    z-index: 8000;
+    background: rgba(20,30,60,0.85);
+    color: #fff;
+    font-family: var(--ff-sans);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  #vf-btn:hover + #vf-tooltip { opacity: 1; }
+
+  #vf-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(0,0,0,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  #vf-modal.open { opacity: 1; pointer-events: auto; }
+
+  #vf-modal video {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 6px;
+    box-shadow: 0 8px 60px rgba(0,0,0,0.6);
+  }
+
+  #vf-close {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.7);
+    font-size: 2rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  #vf-close:hover { color: #fff; }
+</style>
+
+<button id="vf-btn" aria-label="Vezi videoclipul nostru">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+</button>
+<div id="vf-tooltip">Cine suntem</div>
+
+<div id="vf-modal" role="dialog" aria-modal="true" aria-label="Video BuNPartener">
+  <button id="vf-close" aria-label="Închide">&#x2715;</button>
+  <video id="vf-video" src="intro-video.mp4" controls playsinline preload="none"></video>
+</div>
+
+<script>
+(function(){
+  var btn   = document.getElementById('vf-btn');
+  var modal = document.getElementById('vf-modal');
+  var vid   = document.getElementById('vf-video');
+  var close = document.getElementById('vf-close');
+
+  function openModal(){
+    modal.classList.add('open');
+    vid.play();
+  }
+
+  function closeModal(){
+    modal.classList.remove('open');
+    vid.pause();
+    vid.currentTime = 0;
+  }
+
+  btn.addEventListener('click', openModal);
+  close.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', function(e){
+    if(e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeModal();
+  });
+})();
+</script>
 </body>
 </html>
