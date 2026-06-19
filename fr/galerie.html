@@ -110,6 +110,154 @@
 <body>
 <a class="skip-link" href="#main-content" data-i18n="nav.skip">Aller au contenu</a>
 
+<!-- ── Intro overlay ── -->
+<div id="intro-overlay" style="position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity 0.8s ease;">
+
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Phase 1 — video */
+    #iv-video { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1; }
+
+    /* Phase 2 — white screen with text */
+    #iv-white { position:absolute;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .8s ease;z-index:2; }
+    #iv-msg { position:absolute;text-align:center;max-width:640px;width:90%;transition:opacity .8s ease; }
+    #iv-text { font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(1.2rem,3vw,1.75rem);font-weight:300;color:#2c2c2c;line-height:1.6;letter-spacing:.02em; }
+    #iv-cursor { display:inline-block;width:2px;height:1em;background:#2c3e6b;margin-left:2px;vertical-align:middle;animation:ivc .7s step-end infinite; }
+    @keyframes ivc { 50%{opacity:0} }
+    /* Phase 3 — white logo screen */
+    #iv-logo-screen { position:absolute;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .8s ease;z-index:3; }
+    #iv-logo { display:flex;align-items:center;gap:24px; }
+    #iv-icon { width:90px;height:90px;object-fit:contain;opacity:0;transform:scale(.6) rotate(-8deg);transition:opacity .7s ease,transform .7s cubic-bezier(.34,1.56,.64,1); }
+    #iv-icon.show { opacity:1;transform:scale(1) rotate(0); }
+    #iv-div { width:1px;height:70px;background:#c5cfe0;opacity:0;transition:opacity .5s ease;flex-shrink:0; }
+    #iv-div.show { opacity:1; }
+    #iv-name { font-family:'Montserrat',sans-serif;font-size:clamp(1.6rem,4.5vw,2.6rem);font-weight:600;color:#1e2d4f;letter-spacing:.08em;white-space:nowrap;overflow:hidden;max-width:0;transition:max-width 1.2s cubic-bezier(.4,0,.2,1); }
+    #iv-name.show { max-width:400px; }
+    #iv-sub { display:flex;flex-direction:column;gap:3px;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .6s ease; }
+    #iv-sub.show { opacity:1;transform:translateY(0); }
+    #iv-sub span:first-child { font-family:'Cormorant Garamond',serif;font-size:clamp(.7rem,1.6vw,.95rem);color:#5a6a8a;letter-spacing:.12em;text-transform:uppercase; }
+    #iv-sub span:last-child { font-family:'Montserrat',sans-serif;font-size:clamp(.5rem,1.1vw,.65rem);font-weight:300;color:#8a9ab5;letter-spacing:.18em;text-transform:uppercase; }
+
+    /* skip */
+    #iv-skip { position:fixed;bottom:24px;right:24px;z-index:10000;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);padding:7px 16px;font-family:'Montserrat',sans-serif;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:4px;backdrop-filter:blur(4px); }
+  </style>
+
+  <video id="iv-video" playsinline autoplay></video>
+  <audio id="iv-audio" src="/intro-audio.mp3" preload="auto"></audio>
+
+  <!-- text overlay on black screen -->
+  <div id="iv-white">
+    <div id="iv-msg">
+      <p id="iv-text"><span id="iv-cursor"></span></p>
+    </div>
+  </div>
+
+  <!-- white logo screen (after video ends) -->
+  <div id="iv-logo-screen">
+    <div id="iv-logo">
+      <img id="iv-icon" src="/logoonly.png" alt="BuNPartener">
+      <div id="iv-div"></div>
+      <div>
+        <div id="iv-name">Bu<em style="color:#c0392b;font-style:italic;">N</em>Partener</div>
+        <div id="iv-sub">
+          <span>Berliba și Partenerii</span>
+          <span>Birou asociat de avocați</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<button id="iv-skip">Skip ›</button>
+
+<script>
+(function(){
+  var CHARS = (function(){
+    var pre  = 'Un mesaj, pentru siguranța ta juridică, din partea Bu';
+    var stN  = '<em style="color:#c0392b;font-style:italic;font-size:1.2em;font-weight:400">N</em>';
+    var post = 'Partener';
+    var arr  = [];
+    for(var i=0;i<pre.length;i++) arr.push(pre[i]);
+    arr.push(stN);
+    for(var i=0;i<post.length;i++) arr.push(post[i]);
+    return arr;
+  })();
+  var ov         = document.getElementById('intro-overlay');
+  var vid        = document.getElementById('iv-video');
+  var aud        = document.getElementById('iv-audio');
+  var white      = document.getElementById('iv-white');
+  var msg        = document.getElementById('iv-msg');
+  var txt        = document.getElementById('iv-text');
+  var cur        = document.getElementById('iv-cursor');
+  var logoScreen = document.getElementById('iv-logo-screen');
+  var icon       = document.getElementById('iv-icon');
+  var divl       = document.getElementById('iv-div');
+  var name       = document.getElementById('iv-name');
+  var sub        = document.getElementById('iv-sub');
+  var skip       = document.getElementById('iv-skip');
+
+  var textStarted = false;
+
+  function dismiss(){
+    ov.style.opacity='0'; skip.style.display='none';
+    setTimeout(function(){ ov.style.display='none'; }, 800);
+  }
+  skip.addEventListener('click', dismiss);
+
+  function type(i){
+    if(i<=CHARS.length){
+      txt.innerHTML = CHARS.slice(0,i).join('');
+      txt.appendChild(cur);
+      setTimeout(function(){ type(i+1); }, 38);
+    } else {
+      setTimeout(function(){
+        cur.style.display='none';
+        setTimeout(function(){
+          msg.style.opacity='0';
+          setTimeout(revealLogo, 800);
+        }, 700);
+      }, 900);
+    }
+  }
+
+  function revealLogo(){
+    msg.style.display='none';
+    logoScreen.style.opacity='1';
+    skip.style.background='rgba(0,0,0,.07)';
+    skip.style.color='#333';
+    skip.style.borderColor='rgba(0,0,0,.2)';
+    setTimeout(function(){ icon.classList.add('show'); }, 200);
+    setTimeout(function(){ divl.classList.add('show'); }, 500);
+    setTimeout(function(){ name.classList.add('show'); }, 650);
+    setTimeout(function(){ sub.classList.add('show'); }, 1500);
+    setTimeout(dismiss, 3400);
+  }
+
+  vid.addEventListener('timeupdate', function(){
+    if(!textStarted && vid.currentTime >= 13.01){
+      textStarted = true;
+      white.style.opacity = '1';
+      setTimeout(function(){ type(0); }, 400);
+    }
+  });
+
+  vid.src = 'intro-video.mp4';
+  vid.load();
+
+  vid.addEventListener('canplay', function(){
+    var p = vid.play();
+    if(p && p.catch){
+      p.catch(function(){
+        vid.muted = true;
+        vid.play();
+      });
+    }
+    aud.play().catch(function(){});
+  }, {once:true});
+})();
+</script>
+
   <nav class="gal-nav">
     <div class="wrap">
       <a class="gal-logo" href="index.html" aria-label="BuNPartener — acasă">

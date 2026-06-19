@@ -213,7 +213,15 @@ def translate_body(htmltext, t, ro):
     repl_class('sp-list',     rev_list,  'sp.%s.list', is_html=True)
     return htmltext
 
-ASSET_EXT = r'(?:png|jpe?g|gif|webp|svg|ico|css|js|pdf|docx|woff2?|mp4|JPG|JPEG|PNG)'
+# Per-language intro audio. Keys not listed here fall back to the root intro-audio.mp3.
+AUDIO_SRC = {
+    "en": "intro-audio-en.mp3",
+    # "ru": "intro-audio-ru.mp3",
+    # "it": "intro-audio-it.mp3",
+    # "fr": "intro-audio-fr.mp3",
+}
+
+ASSET_EXT = r'(?:png|jpe?g|gif|webp|svg|ico|css|js|pdf|docx|woff2?|mp4|mp3|JPG|JPEG|PNG)'
 def absolutize_assets(htmltext):
     # src="x.ext" / href="x.ext" with a relative, non-anchor, non-absolute path
     def fix(m):
@@ -350,6 +358,10 @@ def main():
             doc = translate_body(doc, T[lang], ro)
             # absolute asset paths (page is now in a subdir)
             doc = absolutize_assets(doc)
+            # swap in per-language audio if available
+            if lang in AUDIO_SRC:
+                doc = doc.replace('src="/intro-audio.mp3"',
+                                  'src="/%s"' % AUDIO_SRC[lang])
             # page-language hint + absolute i18n.js
             doc = inject_page_lang(doc, lang)
             open(os.path.join(d, page), "w", encoding="utf-8").write(doc)

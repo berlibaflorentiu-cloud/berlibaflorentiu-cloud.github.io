@@ -1262,7 +1262,7 @@
     /* Scroll to top */
     #stt {
       position:fixed; bottom:28px; right:28px; z-index:800;
-      width:44px; height:44px; border-radius:50%;
+      width:52px; height:52px; border-radius:50%;
       background: var(--navy-3); color: var(--white); border: 1px solid rgba(255,255,255,.15);
       display:flex; align-items:center; justify-content:center;
       cursor:pointer; opacity:0; pointer-events:none;
@@ -2246,6 +2246,8 @@
 
     <div class="news-g">
 
+      <!-- BIRTHDAY_SLOT — paste birthday-template.html here when needed -->
+
       <!-- 1 · Jun 10 2026 · Moldova1 · Chirtoacă -->
       <a class="news-card" href="https://moldova1.md/p/78119/dosarul-parcarilor-cu-plata--dorin-chirtoaca--o-victorie-amara--procuratura-analizeaza-oportunitatea-recursului-la-csj" target="_blank" rel="noopener">
         <div class="news-thumb">
@@ -2810,7 +2812,7 @@
 </footer>
 
 <button id="stt" aria-label="Înapoi sus">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
 </button>
 
 
@@ -3062,5 +3064,232 @@
 </script>
 <script>window.__PAGE_LANG__='en';</script>
 <script src="/i18n.js?v=66270367"></script>
+
+<!-- ── Video float button + modal ── -->
+<style>
+  @keyframes vf-bounce {
+    0%        { transform: translateY(0) scale(1); }
+    7%        { transform: translateY(-12px) scale(1.06); }
+    14%       { transform: translateY(0) scale(1); }
+    21%       { transform: translateY(-7px) scale(1.03); }
+    28%       { transform: translateY(0) scale(1); }
+    34%       { transform: translateY(-3px) scale(1.01); }
+    40%, 100% { transform: translateY(0) scale(1); }
+  }
+  #vf-btn {
+    position: fixed;
+    bottom: 92px;
+    right: 28px;
+    z-index: 8000;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--navy-3);
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    animation: vf-bounce 4s ease-in-out 3s infinite;
+    transition: background 0.2s ease;
+  }
+  #vf-btn:hover { animation-play-state: paused; transform: translateY(-3px); background: var(--navy-4); }
+  #vf-btn svg { width: 24px; height: 24px; fill: #fff; margin-left: 3px; }
+
+  #vf-tooltip {
+    position: fixed;
+    bottom: 90px;
+    right: 100px;
+    z-index: 8000;
+    background: rgba(20,30,60,0.85);
+    color: #fff;
+    font-family: var(--ff-sans);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  #vf-btn:hover + #vf-tooltip { opacity: 1; }
+
+  #vf-modal {
+    display: none;
+  }
+</style>
+
+<button id="vf-btn" aria-label="Vezi videoclipul nostru">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+</button>
+<div id="vf-tooltip">Cine suntem</div>
+
+<style>
+  #vf-overlay { position:fixed;inset:0;z-index:99998;background:#000;display:none; }
+  #vf-overlay video { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
+  #vf-overlay #vfo-white { position:absolute;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .8s ease;z-index:2; }
+  #vf-overlay #vfo-msg { position:absolute;text-align:center;max-width:640px;width:90%;transition:opacity .8s ease; }
+  #vf-overlay #vfo-text { font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(1.2rem,3vw,1.75rem);font-weight:300;color:#2c2c2c;line-height:1.6;letter-spacing:.02em; }
+  #vf-overlay #vfo-cur { display:inline-block;width:2px;height:1em;background:#2c3e6b;margin-left:2px;vertical-align:middle;animation:vfob .7s step-end infinite; }
+  @keyframes vfob { 50%{opacity:0} }
+  #vf-overlay #vfo-logo-screen { position:absolute;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .8s ease;z-index:3; }
+  #vf-overlay #vfo-logo { display:flex;align-items:center;gap:24px; }
+  #vf-overlay #vfo-icon { width:90px;height:90px;object-fit:contain;opacity:0;transform:scale(.6) rotate(-8deg);transition:opacity .7s ease,transform .7s cubic-bezier(.34,1.56,.64,1); }
+  #vf-overlay #vfo-icon.show { opacity:1;transform:scale(1) rotate(0); }
+  #vf-overlay #vfo-div { width:1px;height:70px;background:#c5cfe0;opacity:0;transition:opacity .5s ease;flex-shrink:0; }
+  #vf-overlay #vfo-div.show { opacity:1; }
+  #vf-overlay #vfo-name { font-family:'Montserrat',sans-serif;font-size:clamp(1.6rem,4.5vw,2.6rem);font-weight:600;color:#1e2d4f;letter-spacing:.08em;white-space:nowrap;overflow:hidden;max-width:0;transition:max-width 1.2s cubic-bezier(.4,0,.2,1); }
+  #vf-overlay #vfo-name.show { max-width:400px; }
+  #vf-overlay #vfo-sub { display:flex;flex-direction:column;gap:3px;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .6s ease; }
+  #vf-overlay #vfo-sub.show { opacity:1;transform:translateY(0); }
+  #vf-overlay #vfo-sub span:first-child { font-family:'Cormorant Garamond',serif;font-size:clamp(.7rem,1.6vw,.95rem);color:#5a6a8a;letter-spacing:.12em;text-transform:uppercase; }
+  #vf-overlay #vfo-sub span:last-child { font-family:'Montserrat',sans-serif;font-size:clamp(.5rem,1.1vw,.65rem);font-weight:300;color:#8a9ab5;letter-spacing:.18em;text-transform:uppercase; }
+  #vf-close-btn { position:fixed;top:24px;right:28px;z-index:99999;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:1.4rem;width:40px;height:40px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px); }
+  @media (max-width:768px) and (orientation:portrait) {
+    #vf-close-btn { top:auto; bottom:24px; }
+  }
+
+</style>
+
+<div id="vf-overlay">
+  <video id="vfo-vid" src="/intro-video.mp4" playsinline webkit-playsinline preload="auto"></video>
+  <audio id="vfo-aud" src="/intro-audio-en.mp3" preload="auto"></audio>
+  <div id="vfo-white">
+    <div id="vfo-msg"><p id="vfo-text"><span id="vfo-cur"></span></p></div>
+  </div>
+  <div id="vfo-logo-screen">
+    <div id="vfo-logo">
+      <img id="vfo-icon" src="/logoonly.png" alt="BuNPartener">
+      <div id="vfo-div"></div>
+      <div>
+        <div id="vfo-name">Bu<em style="color:#c0392b;font-style:italic;">N</em>Partener</div>
+        <div id="vfo-sub"><span>Berliba și Partenerii</span><span>Birou asociat de avocați</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<button id="vf-close-btn" aria-label="Închide">&#x2715;</button>
+
+<script>
+(function(){
+  var btn       = document.getElementById('vf-btn');
+  var overlay   = document.getElementById('vf-overlay');
+  var closeBtn  = document.getElementById('vf-close-btn');
+  var vid       = document.getElementById('vfo-vid');
+  var aud       = document.getElementById('vfo-aud');
+  var white     = document.getElementById('vfo-white');
+  var msg       = document.getElementById('vfo-msg');
+  var txt       = document.getElementById('vfo-text');
+  var cur       = document.getElementById('vfo-cur');
+  var logoScr   = document.getElementById('vfo-logo-screen');
+  var icon      = document.getElementById('vfo-icon');
+  var divl      = document.getElementById('vfo-div');
+  var name      = document.getElementById('vfo-name');
+  var sub       = document.getElementById('vfo-sub');
+
+  // iOS unlock: start audio silently on btn touchstart so no promise race with the click.
+  btn.addEventListener('touchstart', function(){
+    aud.volume = 0;
+    aud.play().catch(function(){});
+  }, {once:true, passive:true});
+
+  var CHARS = (function(){
+    var pre = 'Un mesaj, pentru siguranța ta juridică, din partea Bu';
+    var stN = '<em style="color:#c0392b;font-style:italic;font-size:1.2em;font-weight:400">N</em>';
+    var post = 'Partener';
+    var arr = [];
+    for(var i=0;i<pre.length;i++) arr.push(pre[i]);
+    arr.push(stN);
+    for(var i=0;i<post.length;i++) arr.push(post[i]);
+    return arr;
+  })();
+
+  var textStarted = false;
+
+  function dismiss(){
+    overlay.style.opacity='0';
+    closeBtn.style.display='none';
+    setTimeout(function(){
+      overlay.style.display='none';
+      overlay.style.opacity='';
+      overlay.style.width=''; overlay.style.height='';
+      overlay.style.top=''; overlay.style.left='';
+      overlay.style.bottom=''; overlay.style.right='';
+      overlay.style.transform='';
+      vid.pause(); vid.currentTime=0;
+      aud.pause(); aud.currentTime=0;
+      white.style.opacity='0';
+      msg.style.opacity='1'; msg.style.display='';
+      logoScr.style.opacity='0';
+      icon.classList.remove('show'); divl.classList.remove('show');
+      name.classList.remove('show'); sub.classList.remove('show');
+      textStarted=false;
+    },800);
+  }
+
+  function type(i){
+    if(i<=CHARS.length){
+      txt.innerHTML=CHARS.slice(0,i).join('');
+      txt.appendChild(cur);
+      setTimeout(function(){ type(i+1); },38);
+    } else {
+      setTimeout(function(){
+        cur.style.display='none';
+        setTimeout(function(){ msg.style.opacity='0'; setTimeout(revealLogo,800); },700);
+      },900);
+    }
+  }
+
+  function revealLogo(){
+    msg.style.display='none';
+    logoScr.style.opacity='1';
+    setTimeout(function(){ icon.classList.add('show'); },200);
+    setTimeout(function(){ divl.classList.add('show'); },500);
+    setTimeout(function(){ name.classList.add('show'); },650);
+    setTimeout(function(){ sub.classList.add('show'); },1500);
+    setTimeout(dismiss,3400);
+  }
+
+  vid.addEventListener('timeupdate', function(){
+    if(!textStarted && vid.currentTime >= 13.01){
+      textStarted=true;
+      white.style.opacity='1';
+      setTimeout(function(){ type(0); },400);
+    }
+  });
+
+  vid.addEventListener('ended', function(){
+    if(!textStarted){ textStarted=true; white.style.opacity='1'; setTimeout(function(){ type(0); },400); }
+  });
+
+  closeBtn.addEventListener('click', dismiss);
+
+  btn.addEventListener('click', function(){
+    // Apply landscape rotation on portrait mobile
+    if(window.innerHeight > window.innerWidth){
+      var vw = window.innerWidth, vh = window.innerHeight;
+      overlay.style.width  = vh + 'px';
+      overlay.style.height = vw + 'px';
+      overlay.style.top    = '50%';
+      overlay.style.left   = '50%';
+      overlay.style.bottom = 'auto';
+      overlay.style.right  = 'auto';
+      overlay.style.transform = 'translate(-50%,-50%) rotate(90deg)';
+    }
+    overlay.style.display='block';
+    overlay.style.opacity='1';
+    closeBtn.style.display='flex';
+    cur.style.display='';
+    vid.currentTime = 0;
+    aud.currentTime = 0;
+    aud.volume = 1;
+    vid.play().catch(function(){});
+    aud.play().catch(function(){});
+  });
+})();
+</script>
 </body>
 </html>
