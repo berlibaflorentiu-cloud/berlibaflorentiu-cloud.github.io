@@ -217,7 +217,7 @@ def translate_body(htmltext, t, ro):
 # Uses surrounding HTML/JS context to avoid hitting unrelated occurrences of the same string.
 OVERLAY_TEXT = {
     "en": [
-        ('id="vf-tooltip">Cine suntem<',       'id="vf-tooltip">Who we are<'),
+        ('id="vf-tooltip">Mesaj<',             'id="vf-tooltip">Message<'),
         ('aria-label="Vezi videoclipul nostru"','aria-label="Watch our video"'),
         ('aria-label="Închide"',               'aria-label="Close"'),
         ('<span>Berliba și Partenerii</span>',  '<span>Berliba &amp; Partners</span>'),
@@ -225,9 +225,15 @@ OVERLAY_TEXT = {
         ("'Un mesaj, pentru siguranța ta juridică, din partea Bu'",
          "'A message, for your legal security, from Bu'"),
     ],
-    # "ru": [...],
-    # "it": [...],
-    # "fr": [...],
+    "ru": [
+        ('id="vf-tooltip">Mesaj<',             'id="vf-tooltip">Сообщение<'),
+    ],
+    "it": [
+        ('id="vf-tooltip">Mesaj<',             'id="vf-tooltip">Messaggio<'),
+    ],
+    "fr": [
+        ('id="vf-tooltip">Mesaj<',             'id="vf-tooltip">Message<'),
+    ],
 }
 
 # Per-language intro audio. Keys not listed here fall back to the root intro-audio.mp3.
