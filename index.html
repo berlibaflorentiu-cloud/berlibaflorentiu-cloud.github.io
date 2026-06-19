@@ -3158,6 +3158,9 @@
   #vf-overlay #vfo-sub span:first-child { font-family:'Cormorant Garamond',serif;font-size:clamp(.7rem,1.6vw,.95rem);color:#5a6a8a;letter-spacing:.12em;text-transform:uppercase; }
   #vf-overlay #vfo-sub span:last-child { font-family:'Montserrat',sans-serif;font-size:clamp(.5rem,1.1vw,.65rem);font-weight:300;color:#8a9ab5;letter-spacing:.18em;text-transform:uppercase; }
   #vf-close-btn { position:fixed;top:24px;right:28px;z-index:99999;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:1.4rem;width:40px;height:40px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px); }
+  @media (max-width:768px) and (orientation:portrait) {
+    #vf-close-btn { right:auto; left:28px; }
+  }
 
 </style>
 
@@ -3284,7 +3287,8 @@
     overlay.style.opacity='1';
     closeBtn.style.display='flex';
     cur.style.display='';
-    vid.load();
+    vid.currentTime = 0;
+    aud.currentTime = 0;
     vid.play().catch(function(){});
     aud.play().catch(function(){});
   });
