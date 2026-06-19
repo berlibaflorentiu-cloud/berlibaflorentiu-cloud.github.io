@@ -3159,22 +3159,10 @@
   #vf-overlay #vfo-sub span:last-child { font-family:'Montserrat',sans-serif;font-size:clamp(.5rem,1.1vw,.65rem);font-weight:300;color:#8a9ab5;letter-spacing:.18em;text-transform:uppercase; }
   #vf-close-btn { position:fixed;top:24px;right:28px;z-index:99999;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:1.4rem;width:40px;height:40px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px); }
 
-  @media (max-width:768px) and (orientation:portrait) {
-    #vf-overlay {
-      width: 100vh;
-      height: 100vw;
-      top: 50%;
-      left: 50%;
-      bottom: auto;
-      right: auto;
-      inset: auto;
-      transform: translate(-50%, -50%) rotate(90deg);
-    }
-  }
 </style>
 
 <div id="vf-overlay">
-  <video id="vfo-vid" src="intro-video.mp4" playsinline></video>
+  <video id="vfo-vid" src="intro-video.mp4" playsinline webkit-playsinline preload="auto"></video>
   <audio id="vfo-aud" src="intro-audio.mp3" preload="auto"></audio>
   <div id="vfo-white">
     <div id="vfo-msg"><p id="vfo-text"><span id="vfo-cur"></span></p></div>
@@ -3228,6 +3216,10 @@
     setTimeout(function(){
       overlay.style.display='none';
       overlay.style.opacity='';
+      overlay.style.width=''; overlay.style.height='';
+      overlay.style.top=''; overlay.style.left='';
+      overlay.style.bottom=''; overlay.style.right='';
+      overlay.style.transform='';
       vid.pause(); vid.currentTime=0;
       aud.pause(); aud.currentTime=0;
       white.style.opacity='0';
@@ -3277,11 +3269,23 @@
   closeBtn.addEventListener('click', dismiss);
 
   btn.addEventListener('click', function(){
+    // Apply landscape rotation on portrait mobile
+    if(window.innerHeight > window.innerWidth){
+      var vw = window.innerWidth, vh = window.innerHeight;
+      overlay.style.width  = vh + 'px';
+      overlay.style.height = vw + 'px';
+      overlay.style.top    = '50%';
+      overlay.style.left   = '50%';
+      overlay.style.bottom = 'auto';
+      overlay.style.right  = 'auto';
+      overlay.style.transform = 'translate(-50%,-50%) rotate(90deg)';
+    }
     overlay.style.display='block';
     overlay.style.opacity='1';
     closeBtn.style.display='flex';
     cur.style.display='';
-    vid.play();
+    vid.load();
+    vid.play().catch(function(){});
     aud.play().catch(function(){});
   });
 })();
