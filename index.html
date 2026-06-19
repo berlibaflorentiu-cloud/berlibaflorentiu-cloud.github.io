@@ -2420,7 +2420,7 @@
           <p class="bday-modal-msg">Dragă Tudor, în această zi specială, întreaga echipă a Biroului asociat de avocați «Berliba și Partenerii» îți transmite cele mai sincere și călduroase urări. Fie ca acest an să îți aducă sănătate deplină, bucurii nesfârșite și noi împliniri atât în cariera ta juridică, cât și în viața personală. Dedicarea, profesionalismul și spiritul tău colegial sunt o inspirație zilnică pentru fiecare dintre noi. Mulți ani înainte, cu succes în tot ceea ce îți propui!</p>
           <div class="bday-modal-sig">— Berliba și Partenerii · BuNPartener</div>
           <div class="bday-timer-wrap">
-            <div class="bday-timer-label">ziua ta a început de</div>
+            <div class="bday-timer-label">timp rămas din ziua ta</div>
             <div id="bday-timer">00:00:00</div>
           </div>
         </div>
@@ -2512,16 +2512,14 @@
             modal.appendChild(c);
           }
         }
-        // Timer — counts up from midnight June 19 Moldova time (EEST = UTC+3)
-        var bdayStart = new Date('2026-06-18T21:00:00Z').getTime();
-        var bdayEnd   = bdayStart + 24*3600000;
+        // Timer — counts DOWN to midnight June 20 Moldova time (EEST = UTC+3)
+        var bdayEnd = new Date('2026-06-19T21:00:00Z').getTime();
         function pad2(n){ return n<10?'0'+n:''+n; }
         function updateTimer(){
           var el=document.getElementById('bday-timer'); if(!el) return;
-          var elapsed=Date.now()-bdayStart;
-          if(elapsed<0) elapsed=0;
-          if(elapsed>24*3600000) elapsed=24*3600000;
-          var h=~~(elapsed/3600000), m=~~((elapsed%3600000)/60000), s=~~((elapsed%60000)/1000);
+          var remaining=bdayEnd-Date.now();
+          if(remaining<0) remaining=0;
+          var h=~~(remaining/3600000), m=~~((remaining%3600000)/60000), s=~~((remaining%60000)/1000);
           el.textContent=pad2(h)+':'+pad2(m)+':'+pad2(s);
         }
         updateTimer();
