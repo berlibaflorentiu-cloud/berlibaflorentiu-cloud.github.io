@@ -3202,11 +3202,10 @@
   var name      = document.getElementById('vfo-name');
   var sub       = document.getElementById('vfo-sub');
 
-  // Pre-unlock audio on btn tap so iOS allows aud.play() in the click handler.
-  // The flag prevents the unlock's .then(pause) from firing after click already started playback.
-  var audPlaying = false;
+  // iOS unlock: start audio silently on btn touchstart so no promise race with the click.
   btn.addEventListener('touchstart', function(){
-    aud.play().then(function(){ if(!audPlaying){ aud.pause(); aud.currentTime=0; } }).catch(function(){});
+    aud.volume = 0;
+    aud.play().catch(function(){});
   }, {once:true, passive:true});
 
   var CHARS = (function(){
@@ -3296,9 +3295,9 @@
     overlay.style.opacity='1';
     closeBtn.style.display='flex';
     cur.style.display='';
-    audPlaying = true;
     vid.currentTime = 0;
     aud.currentTime = 0;
+    aud.volume = 1;
     vid.play().catch(function(){});
     aud.play().catch(function(){});
   });
