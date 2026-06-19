@@ -3082,20 +3082,20 @@
     bottom: 84px;
     right: 28px;
     z-index: 8000;
-    width: 58px;
-    height: 58px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: #1e2d4f;
-    border: none;
+    background: var(--navy-3);
+    border: 1px solid rgba(255,255,255,.15);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-    transition: transform 0.2s ease, background 0.2s ease;
+    transition: transform 0.25s, background 0.2s ease;
   }
-  #vf-btn:hover { transform: scale(1.1); background: #2a3f6e; }
-  #vf-btn svg { width: 22px; height: 22px; fill: #fff; margin-left: 3px; }
+  #vf-btn:hover { transform: translateY(-3px); background: var(--navy-4); }
+  #vf-btn svg { width: 20px; height: 20px; fill: #fff; margin-left: 3px; }
 
   #vf-tooltip {
     position: fixed;
