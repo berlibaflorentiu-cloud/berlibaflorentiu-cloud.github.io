@@ -2246,6 +2246,97 @@
 
     <div class="news-g">
 
+      <!-- Birthday card · Tudor Osoainu -->
+      <style>
+        .bday-card { cursor:default; }
+        .bday-card:hover { transform:none !important; border-color:rgba(255,255,255,.1) !important; }
+        .bday-scene {
+          position:relative; width:100%; height:100%;
+          background:radial-gradient(ellipse at 50% 55%, #1e3a6e 0%, #080f20 72%);
+          overflow:hidden; display:flex; flex-direction:column;
+          align-items:center; justify-content:center; gap:6px;
+        }
+        .bday-headline {
+          font-family:'Cormorant Garamond',Georgia,serif;
+          font-size:clamp(1.3rem,3.5vw,1.75rem); font-weight:300;
+          color:#f5d76e; z-index:2; text-align:center; letter-spacing:.04em;
+          animation:bdayGlow 2.2s ease-in-out infinite;
+        }
+        .bday-subname {
+          font-family:'Montserrat',sans-serif;
+          font-size:clamp(.55rem,1.4vw,.75rem); font-weight:600;
+          color:rgba(255,255,255,.85); letter-spacing:.2em;
+          text-transform:uppercase; z-index:2;
+        }
+        @keyframes bdayGlow {
+          0%,100% { text-shadow:0 0 16px rgba(245,215,110,.5); }
+          50% { text-shadow:0 0 36px rgba(245,215,110,1),0 0 70px rgba(245,215,110,.4); }
+        }
+        .bday-c {
+          position:absolute; top:-14px; border-radius:1px;
+          animation:bdayFall linear infinite;
+        }
+        @keyframes bdayFall {
+          0% { transform:translateY(0) rotate(0deg); opacity:1; }
+          85% { opacity:1; }
+          100% { transform:translateY(230px) rotate(430deg); opacity:0; }
+        }
+        .bday-star {
+          position:absolute; width:3px; height:3px; border-radius:50%;
+          animation:bdayTwinkle ease-in-out infinite;
+        }
+        @keyframes bdayTwinkle {
+          0%,100% { opacity:.15; transform:scale(1); }
+          50% { opacity:1; transform:scale(2.2); }
+        }
+      </style>
+      <div class="news-card bday-card">
+        <div class="news-thumb">
+          <div class="bday-scene" id="bday-scene">
+            <div class="bday-headline">La mulți ani,</div>
+            <div class="bday-subname">Tudor Osoainu</div>
+          </div>
+        </div>
+        <div class="news-body">
+          <div class="news-meta">
+            <span class="news-source">BuNPartener</span>
+            <span class="news-date">19 iun. 2026</span>
+          </div>
+          <h3 class="news-title">La mulți ani, Tudor Osoainu!</h3>
+          <p class="news-excerpt">Colectivul Biroului asociat de avocați «Berliba și Partenerii» îi urează colegului Tudor Osoainu un călduros La mulți ani — cu sănătate, bucurii și noi succese în cariera juridică.</p>
+        </div>
+      </div>
+      <script>
+      (function(){
+        var scene = document.getElementById('bday-scene');
+        if(!scene) return;
+        var colors = ['#f5d76e','#e74c3c','#3498db','#2ecc71','#9b59b6','#fff','#f39c12','#1abc9c'];
+        for(var i=0;i<20;i++){
+          var c = document.createElement('div');
+          c.className = 'bday-c';
+          var round = Math.random()>.5;
+          c.style.cssText='left:'+(Math.random()*100)+'%;'
+            +'width:'+(Math.random()*6+4)+'px;'
+            +'height:'+(Math.random()*9+5)+'px;'
+            +'background:'+colors[Math.floor(Math.random()*colors.length)]+';'
+            +'animation-duration:'+(Math.random()*2+1.8)+'s;'
+            +'animation-delay:'+(Math.random()*3.5)+'s;'
+            +'border-radius:'+(round?'50%':'2px')+';';
+          scene.appendChild(c);
+        }
+        for(var j=0;j<14;j++){
+          var s = document.createElement('div');
+          s.className = 'bday-star';
+          s.style.cssText='left:'+(Math.random()*88+6)+'%;'
+            +'top:'+(Math.random()*78+8)+'%;'
+            +'background:'+colors[Math.floor(Math.random()*colors.length)]+';'
+            +'animation-duration:'+(Math.random()*1.8+.8)+'s;'
+            +'animation-delay:'+(Math.random()*2.5)+'s;';
+          scene.appendChild(s);
+        }
+      })();
+      </script>
+
       <!-- 1 · Jun 10 2026 · Moldova1 · Chirtoacă -->
       <a class="news-card" href="https://moldova1.md/p/78119/dosarul-parcarilor-cu-plata--dorin-chirtoaca--o-victorie-amara--procuratura-analizeaza-oportunitatea-recursului-la-csj" target="_blank" rel="noopener">
         <div class="news-thumb">
