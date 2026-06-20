@@ -266,8 +266,8 @@ def absolutize_assets(htmltext):
             return m.group(0)
         return "url('/%s')" % val
     htmltext = re.sub(r"url\(['\"]?([^'\")]+\."+ASSET_EXT+r")['\"]?\)", fixurl, htmltext)
-    # cv.html TEAM object image paths (JS string values)
-    htmltext = re.sub(r'(img:\s*")([^"/][^"]*\.'+ASSET_EXT+r')(")',
+    # cv.html TEAM object asset paths (img / cvFile / cvFileEn — JS string values)
+    htmltext = re.sub(r'((?:img|cvFile|cvFileEn):\s*")([^"/][^"]*\.'+ASSET_EXT+r')(")',
                       lambda m: m.group(1) + '/' + m.group(2) + m.group(3), htmltext)
     return htmltext
 

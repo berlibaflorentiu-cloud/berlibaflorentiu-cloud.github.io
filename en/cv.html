@@ -208,7 +208,7 @@
   <script>
     /* ── Team data — keyed by slug. Bio text is placeholder until real CVs are added. ── */
     const TEAM = {
-      "viorel-berliba":   { name: "Viorel V. BERLIBA", type: "asociat", role: "avocat-coordonator", cred: "conferențiar universitar · doctor habilitat în drept", img: "/Viorel Berliba.jpg", cvFile: "CVViorel.pdf",
+      "viorel-berliba":   { name: "Viorel V. BERLIBA", type: "asociat", role: "avocat-coordonator", cred: "conferențiar universitar · doctor habilitat în drept", img: "/Viorel Berliba.jpg", cvFile: "/CVViorel.pdf",
         bio: [
           "Ceea ce m-a atras în profesia de avocat este posibilitatea de a schimba mentalități și a distruge stereotipuri prin activități legale și rezultate necesare. Folosesc în activitatea zilnică mai multe instrumente juridice, prin care încerc să fiu alături de Omul aflat în dificultate, care are o anumită problemă juridică și de a-i oferi nu doar apărare, ci și o anumită certitudine. Mă implic în general în cauzele penale, dar acord sprijin colegilor mei în toate cauzele gestionate de echipa Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener. Dreptul penal nu este pentru mine o simplă tehnică juridică, ci menține un angajament stabil față de echitate și față de demnitatea Omului pe care îl reprezint. Activitatea didactică și științifică, pe de o parte, dar și cea practico-aplicativă, pe de altă parte, se completează reciproc: cercetarea îmi propulsează gândirea critică, iar în sala de judecată îmi testez zilnic cunoștințele teoretice.",
           "La Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener contribui cu o experiență de peste 28 ani în domeniul didactico-științific (fiind axat exclusiv pe domeniul dreptului penal), dar și cu o implicare activă de peste 10 ani în domeniul avocaturii, participând la gestionarea multiplelor cauze penale în Republica Moldova, dar și în alte state ale lumii (în echipe de avocați multinaționale). În calitatea mea de cadru didactic și cercetător științific, dar și în rolul de avocat-coordonator încerc în permanență să contribui și să consolidez echipa Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener spre asigurarea unui standard înalt de calitate în fiecare dosar pe care îl preluăm și îl gestionăm."
@@ -242,7 +242,7 @@
           "Asocierea cu Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener îmi oferă un cadru profesionist în care pot învăța, pot contribui la activitatea echipei și mă pot implica responsabil în identificarea unor soluții juridice clare și adaptate fiecărui caz."
         ]
       },
-      "tudor-osoianu":    { name: "Tudor OSOIANU", type: "colaborare", role: "avocat prin colaborare · CA „Tudor OSOIANU”", cred: "profesor universitar · doctor în drept", img: "/Tudor.jpg",
+      "tudor-osoianu":    { name: "Tudor OSOIANU", type: "colaborare", role: "avocat prin colaborare · CA „Tudor OSOIANU”", cred: "profesor universitar · doctor în drept", img: "/Tudor.jpg", cvFile: "/CVTudorO.pdf", cvFileEn: "/CVTudorOeng.pdf",
         bio: [
           "Pentru mine, avocatura înseamnă nu doar asistență juridică, ci și sprijin real, claritate și certitudine pentru omul care se confruntă cu o problemă juridică.",
           "Domeniul meu principal de activitate vizează dreptul penal și procedura penală, pe care îl privesc ca pe un angajament față de echitate, libertate și demnitatea persoanei reprezentate.",
@@ -371,7 +371,9 @@
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
           '<span id="cv-doc-lbl">Deschide CV-ul</span>';
         btn.addEventListener("click", function () {
-          document.getElementById("cv-modal-frame").src = p.cvFile;
+          var lang = document.documentElement.lang || "ro";
+          var file = (lang === "en" && p.cvFileEn) ? p.cvFileEn : p.cvFile;
+          document.getElementById("cv-modal-frame").src = file;
           document.getElementById("cv-modal-title").textContent = "Curriculum Vitae — " + p.name;
           document.getElementById("cv-modal-bg").classList.add("open");
         });
