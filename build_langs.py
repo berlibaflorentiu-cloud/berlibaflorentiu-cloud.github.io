@@ -227,6 +227,12 @@ OVERLAY_TEXT = {
     ],
     "ru": [
         ('id="vf-tooltip">Mesaj<',             'id="vf-tooltip">Сообщение<'),
+        ('aria-label="Vezi videoclipul nostru"','aria-label="Смотреть наше видео"'),
+        ('aria-label="Închide"',               'aria-label="Закрыть"'),
+        ('<span>Berliba și Partenerii</span>',  '<span>Берлиба и Партнеры</span>'),
+        ('<span>Birou asociat de avocați</span>','<span>Адвокатское бюро</span>'),
+        ("'Un mesaj, pentru siguranța ta juridică, din partea Bu'",
+         "'Послание для вашей правовой защиты от Bu'"),
     ],
     "it": [
         ('id="vf-tooltip">Mesaj<',             'id="vf-tooltip">Messaggio<'),
