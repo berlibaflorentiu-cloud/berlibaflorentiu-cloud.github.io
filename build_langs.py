@@ -239,7 +239,7 @@ OVERLAY_TEXT = {
 # Per-language intro audio. Keys not listed here fall back to the root intro-audio.mp3.
 AUDIO_SRC = {
     "en": "intro-audio-en.mp3",
-    # "ru": "intro-audio-ru.mp3",
+    "ru": "ru.mp3",
     # "it": "intro-audio-it.mp3",
     # "fr": "intro-audio-fr.mp3",
 }
