@@ -3404,11 +3404,19 @@
     aud.currentTime = 0;
   }, {once:true, passive:true});
 
+  var TEXT_MAP = {
+    ro: 'A message, for your legal security, from Bu',
+    en: 'A message for your legal security, from Bu',
+    ru: 'Сообщение для вашей правовой безопасности, от Bu',
+    it: 'Un messaggio per la tua sicurezza giuridica, da Bu',
+    fr: 'Un message pour votre sécurité juridique, de la part de Bu'
+  };
+
   var CHARS = (function(){
-    var pre = 'A message, for your legal security, from Bu';
-    var stN = '<em style="color:#c0392b;font-style:italic;font-weight:400">N</em>';
+    var pre  = TEXT_MAP[window._lang] || TEXT_MAP.ro;
+    var stN  = '<em style="color:#c0392b;font-style:italic;font-weight:400">N</em>';
     var post = 'Partener';
-    var arr = [];
+    var arr  = [];
     for(var i=0;i<pre.length;i++) arr.push(pre[i]);
     arr.push(stN);
     for(var i=0;i<post.length;i++) arr.push(post[i]);
