@@ -3371,7 +3371,7 @@
       <div id="vfo-div"></div>
       <div>
         <div id="vfo-name">Bu<em style="color:#c0392b;font-style:italic;">N</em>Partener</div>
-        <div id="vfo-sub"><span></span><span></span></div>
+        <div id="vfo-sub"><span>Берлиба и Партнеры</span><span>Адвокатское бюро</span></div>
       </div>
     </div>
   </div>
@@ -3412,24 +3412,16 @@
     fr: 'Un message pour votre sécurité juridique, de la part de Bu'
   };
 
-  var CHARS = [];
-  function buildCHARS(){
+  var CHARS = (function(){
     var pre  = TEXT_MAP[window._lang] || TEXT_MAP.ro;
     var stN  = '<em style="color:#c0392b;font-style:italic;font-weight:400">N</em>';
     var post = 'Partener';
-    CHARS = [];
-    for(var i=0;i<pre.length;i++) CHARS.push(pre[i]);
-    CHARS.push(stN);
-    for(var i=0;i<post.length;i++) CHARS.push(post[i]);
-  }
-
-  var SUB_MAP = {
-    ro: ['Berliba și Partenerii',   'Birou asociat de avocați'],
-    en: ['Berliba and Partners',    'Associated law firm'],
-    ru: ['Берлиба и Партнёры',      'Ассоциированная адвокатская контора'],
-    it: ['Berliba e Soci',          'Studio associato di avvocati'],
-    fr: ['Berliba et Associés',     'Cabinet d\'avocats associés']
-  };
+    var arr  = [];
+    for(var i=0;i<pre.length;i++) arr.push(pre[i]);
+    arr.push(stN);
+    for(var i=0;i<post.length;i++) arr.push(post[i]);
+    return arr;
+  })();
 
   var textStarted = false;
 
@@ -3456,7 +3448,6 @@
   }
 
   function type(i){
-    if(i===0) buildCHARS();
     if(i<=CHARS.length){
       txt.innerHTML=CHARS.slice(0,i).join('');
       txt.appendChild(cur);
@@ -3470,9 +3461,6 @@
   }
 
   function revealLogo(){
-    var labels = SUB_MAP[window._lang] || SUB_MAP.ro;
-    sub.children[0].textContent = labels[0];
-    sub.children[1].textContent = labels[1];
     msg.style.display='none';
     logoScr.style.opacity='1';
     setTimeout(function(){ icon.classList.add('show'); },200);
