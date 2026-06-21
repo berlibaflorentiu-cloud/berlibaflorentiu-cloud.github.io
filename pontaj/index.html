@@ -781,7 +781,7 @@ async function loadAll() {
     if (!user) { showLoginScreen(); return; }
 
     const { data: profile, error: pe } = await db.from('profiles').select('*').eq('id', user.id).single();
-    if (!profile || pe) { await db.auth.signOut(); showLoginScreen(); return; }
+    if (!profile || pe) { db.auth.signOut(); showLoginScreen(); return; }
     currentUser = profile;
   } catch (e) {
     showLoginScreen();
