@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -30,84 +31,139 @@
       min-height: 100dvh;
     }
 
-    /* ── LOGIN ── */
-    #login {
+    /* ── LOADING ── */
+    #loading-screen {
       min-height: 100dvh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .loading-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+    }
+    .loading-dots span {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--gold);
+      border-radius: 50%;
+      margin: 0 3px;
+      opacity: 0.3;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+
+    /* ── AUTH ── */
+    #auth-screen {
+      display: none;
+      min-height: 100dvh;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
       padding: 40px 24px;
-      gap: 52px;
+      gap: 40px;
     }
 
-    .login-header { text-align: center; }
-
-    .login-title {
+    .auth-brand { text-align: center; }
+    .auth-logo {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(72px, 14vw, 112px);
+      font-size: clamp(64px, 14vw, 100px);
       font-weight: 600;
       letter-spacing: 0.2em;
       color: var(--gold);
       line-height: 1;
     }
+    .auth-rule { width: 60px; height: 1px; background: var(--gold); margin: 14px auto; opacity: 0.4; }
+    .auth-sub { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
 
-    .login-rule {
-      width: 80px;
-      height: 1px;
-      background: var(--gold);
-      margin: 16px auto;
-      opacity: 0.4;
-    }
-
-    .login-sub {
-      font-size: 12px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .login-section-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--muted);
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .login-users {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      max-width: 600px;
-    }
-
-    .user-card {
+    .auth-box {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 18px 26px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, transform 0.1s;
-      min-width: 150px;
-      text-align: center;
+      border-radius: 12px;
+      padding: 28px 32px;
+      width: 100%;
+      max-width: 380px;
     }
-    .user-card:hover {
-      border-color: var(--gold);
-      background: var(--gold-dim);
-      transform: translateY(-2px);
+
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
     }
-    .user-card.admin-card { border-style: dashed; }
-    .uc-name { font-weight: 500; font-size: 15px; }
-    .uc-role {
-      font-size: 11px;
+    .auth-tab {
+      flex: 1;
+      background: none;
+      border: none;
       color: var(--muted);
-      margin-top: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 0;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
     }
+    .auth-tab.active { color: var(--gold); border-color: var(--gold); }
+
+    .auth-fields { display: flex; flex-direction: column; gap: 14px; }
+
+    .auth-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin-bottom: 5px;
+      display: block;
+    }
+    .auth-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 10px 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .auth-input:focus { border-color: var(--gold); }
+    .auth-input::placeholder { color: var(--muted); }
+
+    .auth-submit {
+      width: 100%;
+      background: var(--gold);
+      border: none;
+      border-radius: 7px;
+      color: #0D1117;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 11px;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: opacity 0.15s;
+    }
+    .auth-submit:hover { opacity: 0.85; }
+    .auth-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .auth-msg {
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+      min-height: 18px;
+    }
+    .auth-msg.error { color: var(--red); }
+    .auth-msg.success { color: var(--green); }
 
     /* ── APP SHELL ── */
     #app-shell { display: none; }
@@ -125,7 +181,6 @@
       top: 0;
       z-index: 20;
     }
-
     .header-brand {
       font-family: 'Cormorant Garamond', serif;
       font-size: 20px;
@@ -133,7 +188,6 @@
       letter-spacing: 0.14em;
       color: var(--gold);
     }
-
     .header-right { display: flex; align-items: center; gap: 14px; }
     .header-user { font-size: 13px; color: var(--muted); }
 
@@ -182,7 +236,6 @@
       flex-wrap: wrap;
       gap: 12px;
     }
-
     .toggle-group {
       display: flex;
       background: var(--surface);
@@ -205,12 +258,7 @@
     .toggle-btn.active { background: var(--gold); color: var(--bg); }
 
     /* ── STATS ── */
-    .stats-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
+    .stats-row { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -219,20 +267,8 @@
       flex: 1;
       min-width: 140px;
     }
-    .stat-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-    .stat-value {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 36px;
-      font-weight: 600;
-      color: var(--gold);
-      line-height: 1;
-    }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
+    .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: var(--gold); line-height: 1; }
     .stat-sub { font-size: 12px; color: var(--muted); margin-top: 5px; }
 
     /* ── FORM ── */
@@ -243,13 +279,7 @@
       padding: 22px 24px;
       margin-bottom: 24px;
     }
-    .form-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--gold);
-      margin-bottom: 16px;
-    }
+    .form-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold); margin-bottom: 16px; }
     .form-grid {
       display: grid;
       grid-template-columns: 150px 90px 1fr 1.5fr auto;
@@ -257,12 +287,7 @@
       align-items: end;
     }
     .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      color: var(--muted);
-    }
+    .field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
     .field input, .field select {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -279,12 +304,7 @@
     .field input::placeholder { color: var(--muted); }
 
     /* ── TABLE ── */
-    .table-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
     .table-header {
       display: flex;
       align-items: center;
@@ -293,7 +313,6 @@
       border-bottom: 1px solid var(--border);
     }
     .table-title { font-size: 13px; font-weight: 600; }
-
     table { width: 100%; border-collapse: collapse; }
     th {
       text-align: left;
@@ -308,12 +327,7 @@
     td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid var(--surface2); }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface2); }
-
-    .td-hours {
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      color: var(--gold);
-    }
+    .td-hours { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--gold); }
     .td-date { color: var(--muted); font-size: 13px; }
     .td-money { font-size: 13px; color: var(--muted); }
 
@@ -343,24 +357,11 @@
       gap: 16px;
       flex-wrap: wrap;
     }
-    .timer-bar.running {
-      border-color: var(--green);
-      background: rgba(63,185,80,0.06);
-    }
+    .timer-bar.running { border-color: var(--green); background: rgba(63,185,80,0.06); }
     .timer-left { display: flex; align-items: center; gap: 14px; }
-    .timer-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--muted); flex-shrink: 0;
-    }
-    .timer-bar.running .timer-dot {
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
+    .timer-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+    .timer-bar.running .timer-dot { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .timer-display {
       font-family: 'Cormorant Garamond', serif;
       font-size: 36px;
@@ -372,7 +373,6 @@
     }
     .timer-bar.running .timer-display { color: var(--green); }
     .timer-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
-
     .btn-timer-start {
       background: none;
       border: 1px solid var(--border);
@@ -402,18 +402,14 @@
     }
     .btn-timer-stop:hover { opacity: 0.85; }
 
-    .empty-state {
-      text-align: center;
-      padding: 56px 24px;
-      color: var(--muted);
-    }
+    .empty-state { text-align: center; padding: 56px 24px; color: var(--muted); }
     .empty-icon { font-size: 28px; margin-bottom: 12px; opacity: 0.5; }
     .empty-state p { font-size: 14px; line-height: 1.6; }
 
     /* ── ADMIN: lawyer cards ── */
     .lawyer-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 12px;
       margin-bottom: 28px;
     }
@@ -429,29 +425,39 @@
     .lsc.active { border-color: var(--gold); background: var(--gold-dim); }
     .lsc.dashed { border-style: dashed; }
     .lsc-name { font-weight: 600; font-size: 15px; margin-bottom: 12px; }
-    .lsc-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 5px;
-    }
+    .lsc-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 5px; }
     .lsc-row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
 
-    /* ── ADD USER ── */
-    .add-user-form {
+    /* rate edit inside card */
+    .rate-input {
+      width: 64px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 3px 6px;
+      outline: none;
+      text-align: right;
+    }
+    .rate-input:focus { border-color: var(--gold); }
+
+    /* ── INVITE INFO BOX ── */
+    .invite-box {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 20px 24px;
+      padding: 16px 20px;
       margin-bottom: 24px;
-    }
-    .add-user-row {
       display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 12px;
-      align-items: flex-end;
       flex-wrap: wrap;
     }
+    .invite-box p { font-size: 13px; color: var(--muted); }
+    .invite-box strong { color: var(--text); }
 
     /* ── MODAL ── */
     .modal-overlay {
@@ -485,102 +491,9 @@
       background: var(--surface);
       z-index: 1;
     }
-    .modal-head-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--gold);
-    }
-    .modal-actions { display: flex; gap: 8px; }
-
-    /* ── REPORT BODY ── */
+    .modal-head-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--gold); }
+    .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .report-body { padding: 32px 36px; position: relative; }
-
-    .report-firm {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .report-period {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin-bottom: 32px;
-    }
-
-    .report-section { margin-bottom: 32px; }
-    .report-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--gold);
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .report-table { width: 100%; border-collapse: collapse; }
-    .report-table th {
-      text-align: left;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      font-weight: 500;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .report-table td {
-      padding: 10px 0;
-      font-size: 14px;
-      border-bottom: 1px solid var(--surface2);
-    }
-    .report-table tr:last-child td { border-bottom: none; }
-
-    .report-total {
-      background: var(--gold-dim);
-      border: 1px solid rgba(200,169,110,0.35);
-      border-radius: 8px;
-      padding: 18px 22px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 18px;
-    }
-    .rt-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    .rt-value {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 30px;
-      font-weight: 600;
-      color: var(--gold);
-    }
-
-    .lawyer-block { margin-bottom: 24px; }
-    .lawyer-block-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--gold);
-      margin-bottom: 8px;
-    }
-
-    /* ── STAMP ── */
-    .stamp {
-      position: absolute;
-      top: 28px;
-      right: 36px;
-      width: 100px;
-      height: 100px;
-      opacity: 0.85;
-      pointer-events: none;
-    }
 
     /* ── PRINT ── */
     @media print {
@@ -592,45 +505,80 @@
       .modal-head-title { color: #111; }
       .report-body { padding: 24px 0; }
       :root {
-        --text: #111;
-        --muted: #555;
-        --gold: #7a5c1e;
-        --border: #ddd;
-        --surface2: #f5f5f5;
-        --gold-dim: #f9f4ea;
-        --bg: white;
-        --surface: white;
+        --text: #111; --muted: #555; --gold: #7a5c1e;
+        --border: #ddd; --surface2: #f5f5f5; --gold-dim: #f9f4ea;
+        --bg: white; --surface: white;
       }
-      .stamp { opacity: 0.7; }
     }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 720px) {
       main { padding: 20px 16px; }
       header { padding: 0 16px; }
-      .form-grid {
-        grid-template-columns: 1fr 1fr;
-      }
+      .form-grid { grid-template-columns: 1fr 1fr; }
       .form-grid > *:nth-child(3),
       .form-grid > *:nth-child(4),
-      .form-grid > *:nth-child(5) {
-        grid-column: span 2;
-      }
+      .form-grid > *:nth-child(5) { grid-column: span 2; }
     }
   </style>
 </head>
 <body>
 
-<!-- ══ LOGIN ══ -->
-<div id="login">
-  <div class="login-header">
-    <div class="login-title">PONTAJ</div>
-    <div class="login-rule"></div>
-    <div class="login-sub">Evidență ore facturabile</div>
+<!-- ══ LOADING ══ -->
+<div id="loading-screen">
+  <div class="loading-logo">PONTAJ</div>
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- ══ AUTH ══ -->
+<div id="auth-screen">
+  <div class="auth-brand">
+    <div class="auth-logo">PONTAJ</div>
+    <div class="auth-rule"></div>
+    <div class="auth-sub">Evidență ore facturabile</div>
   </div>
-  <div>
-    <div class="login-section-label">Selectează utilizatorul</div>
-    <div class="login-users" id="userCards"></div>
+
+  <div class="auth-box">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Autentificare</button>
+      <button class="auth-tab" id="tab-register" onclick="showTab('register')">Cont nou</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="form-login" class="auth-fields">
+      <div>
+        <label class="auth-label">Email</label>
+        <input type="email" id="l-email" class="auth-input" placeholder="email@firma.md" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <div>
+        <label class="auth-label">Parolă</label>
+        <input type="password" id="l-password" class="auth-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <button class="auth-submit" id="btn-login" onclick="login()">Autentificare</button>
+      <div class="auth-msg" id="login-msg"></div>
+    </div>
+
+    <!-- Register form -->
+    <div id="form-register" class="auth-fields" style="display:none">
+      <div>
+        <label class="auth-label">Nume complet</label>
+        <input type="text" id="r-name" class="auth-input" placeholder="Prenume Nume">
+      </div>
+      <div>
+        <label class="auth-label">Email</label>
+        <input type="email" id="r-email" class="auth-input" placeholder="email@firma.md">
+      </div>
+      <div>
+        <label class="auth-label">Parolă (min. 6 caractere)</label>
+        <input type="password" id="r-password" class="auth-input" placeholder="••••••••">
+      </div>
+      <div>
+        <label class="auth-label">Tarif orar (MDL/h)</label>
+        <input type="number" id="r-rate" class="auth-input" value="150" min="0" step="50">
+      </div>
+      <button class="auth-submit" id="btn-register" onclick="register()">Creare cont</button>
+      <div class="auth-msg" id="register-msg"></div>
+    </div>
   </div>
 </div>
 
@@ -661,74 +609,20 @@
 
 <script>
 // ═══════════════════════════════════════
-// STORAGE
+// SUPABASE
 // ═══════════════════════════════════════
 
-const DEFAULT_USERS = [
-  { id: 'admin', name: 'Administrator', role: 'admin', rate: 0 },
-  { id: 'u1', name: 'Ion Popescu', role: 'avocat', rate: 150 },
-  { id: 'u2', name: 'Maria Ionescu', role: 'avocat', rate: 150 },
-];
-
-function getUsers() {
-  const raw = localStorage.getItem('pontaj_users');
-  return raw ? JSON.parse(raw) : DEFAULT_USERS;
-}
-function saveUsers(u) { localStorage.setItem('pontaj_users', JSON.stringify(u)); }
-
-function getEntries() {
-  return JSON.parse(localStorage.getItem('pontaj_entries') || '[]');
-}
-function saveEntries(e) { localStorage.setItem('pontaj_entries', JSON.stringify(e)); }
-
-function getCurrentUser() {
-  const id = sessionStorage.getItem('pontaj_uid');
-  if (!id) return null;
-  return getUsers().find(u => u.id === id) || null;
-}
+const SUPA_URL = 'https://beuseulqtgtesavswxyy.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJldXNldWxxdGd0ZXNhdnN3eHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzM0MzYsImV4cCI6MjA5NzY0OTQzNn0.IV-pknNPnOyeRgZDi5sV413HHrPbqbtdPY_sxQ-HORc';
+const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ═══════════════════════════════════════
-// DATE HELPERS
+// GLOBAL STATE
 // ═══════════════════════════════════════
 
-function todayStr() { return new Date().toISOString().split('T')[0]; }
-
-function getWeekRange(d) {
-  const base = d ? new Date(d) : new Date();
-  const day = base.getDay() || 7;
-  const mon = new Date(base); mon.setDate(base.getDate() - day + 1);
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  return { start: mon.toISOString().split('T')[0], end: sun.toISOString().split('T')[0] };
-}
-
-function getMonthRange(year, month) {
-  const start = `${year}-${String(month).padStart(2,'0')}-01`;
-  const last  = new Date(year, month, 0).getDate();
-  return { start, end: `${year}-${String(month).padStart(2,'0')}-${String(last).padStart(2,'0')}` };
-}
-
-function filterEntries(entries, start, end, userId) {
-  return entries.filter(e =>
-    e.date >= start && e.date <= end && (!userId || e.userId === userId)
-  );
-}
-
-function fmtDate(s) {
-  const [y,m,d] = s.split('-'); return `${d}.${m}.${y}`;
-}
-
-function fmtMoney(n) {
-  return n.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' MDL';
-}
-
-function sumH(arr) { return arr.reduce((s, e) => s + Number(e.hours), 0); }
-
-const MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
-                'Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
-
-// ═══════════════════════════════════════
-// APP STATE
-// ═══════════════════════════════════════
+let currentUser = null;
+let allUsers    = [];
+let allEntries  = [];
 
 const state = { period: 'week', filterUser: 'all' };
 
@@ -742,39 +636,153 @@ const PRESETS = [
 ];
 
 // ═══════════════════════════════════════
-// LOGIN / LOGOUT
+// AUTH SCREEN
 // ═══════════════════════════════════════
 
-function renderLogin() {
-  const el = document.getElementById('userCards');
-  el.innerHTML = getUsers().map(u => `
-    <div class="user-card ${u.role==='admin' ? 'admin-card' : ''}" onclick="login('${u.id}')">
-      <div class="uc-name">${u.name}</div>
-      <div class="uc-role">${u.role==='admin' ? 'Administrator' : 'Avocat'}</div>
-    </div>
-  `).join('');
+function showTab(tab) {
+  document.getElementById('form-login').style.display    = tab === 'login'    ? 'flex' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'flex' : 'none';
+  document.getElementById('tab-login').classList.toggle('active',    tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('login-msg').textContent    = '';
+  document.getElementById('register-msg').textContent = '';
 }
 
-function login(id) {
-  sessionStorage.setItem('pontaj_uid', id);
+function setAuthLoading(form, on) {
+  const btn = document.getElementById(form === 'login' ? 'btn-login' : 'btn-register');
+  btn.disabled = on;
+  btn.textContent = on ? '...' : (form === 'login' ? 'Autentificare' : 'Creare cont');
+}
+
+function showAuthMsg(form, msg, type = 'error') {
+  const el = document.getElementById(form + '-msg');
+  el.textContent = msg;
+  el.className = 'auth-msg ' + type;
+}
+
+async function login() {
+  const email    = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-password').value;
+  if (!email || !password) { showAuthMsg('login', 'Completați emailul și parola.'); return; }
+  setAuthLoading('login', true);
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  if (error) {
+    showAuthMsg('login', error.message === 'Invalid login credentials'
+      ? 'Email sau parolă incorectă.' : error.message);
+    setAuthLoading('login', false);
+  }
+  // on success, onAuthStateChange fires → loadAll()
+}
+
+async function register() {
+  const name     = document.getElementById('r-name').value.trim();
+  const email    = document.getElementById('r-email').value.trim();
+  const password = document.getElementById('r-password').value;
+  const rate     = parseFloat(document.getElementById('r-rate').value) || 150;
+  if (!name)              { showAuthMsg('register', 'Introduceți numele complet.'); return; }
+  if (!email)             { showAuthMsg('register', 'Introduceți emailul.'); return; }
+  if (password.length < 6){ showAuthMsg('register', 'Parola trebuie să aibă minim 6 caractere.'); return; }
+  setAuthLoading('register', true);
+  const { error } = await db.auth.signUp({
+    email, password,
+    options: { data: { name, rate: rate.toString() } }
+  });
+  setAuthLoading('register', false);
+  if (error) { showAuthMsg('register', error.message); return; }
+  showAuthMsg('register', 'Cont creat cu succes! Vă puteți autentifica.', 'success');
+  setTimeout(() => showTab('login'), 1800);
+}
+
+async function logout() {
+  await db.auth.signOut();
+  currentUser = null; allUsers = []; allEntries = [];
+}
+
+// ═══════════════════════════════════════
+// LOAD DATA & SHOW APP
+// ═══════════════════════════════════════
+
+async function loadAll() {
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) { showLoginScreen(); return; }
+
+  const { data: profile, error: pe } = await db.from('profiles').select('*').eq('id', user.id).single();
+  if (!profile || pe) { await db.auth.signOut(); return; }
+  currentUser = profile;
+
+  const [usersRes, entriesRes] = await Promise.all([
+    db.from('profiles').select('*').order('name'),
+    db.from('entries').select('*').order('date', { ascending: false })
+  ]);
+  allUsers   = usersRes.data  || [];
+  allEntries = entriesRes.data || [];
+
   showApp();
 }
 
-function logout() {
-  sessionStorage.removeItem('pontaj_uid');
+function showLoginScreen() {
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display    = 'flex';
+  document.getElementById('app-shell').style.display      = 'none';
   document.getElementById('app-shell').classList.remove('visible');
-  document.getElementById('login').style.display = 'flex';
-  renderLogin();
+  showTab('login');
 }
 
 function showApp() {
-  const user = getCurrentUser();
-  if (!user) return;
-  document.getElementById('login').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display    = 'none';
+  document.getElementById('app-shell').style.display      = '';
   document.getElementById('app-shell').classList.add('visible');
-  document.getElementById('headerUser').textContent = user.name;
+  document.getElementById('headerUser').textContent = currentUser.name;
   render();
 }
+
+// ═══════════════════════════════════════
+// DATA HELPERS (in-memory)
+// ═══════════════════════════════════════
+
+function getUsers()       { return allUsers; }
+function getEntries()     { return allEntries; }
+function getCurrentUser() { return currentUser; }
+
+function filterEntries(entries, start, end, userId) {
+  return entries.filter(e =>
+    e.date >= start && e.date <= end && (!userId || e.user_id === userId)
+  );
+}
+
+function sumH(arr) { return arr.reduce((s, e) => s + Number(e.hours), 0); }
+
+// ═══════════════════════════════════════
+// DATE / FORMAT HELPERS
+// ═══════════════════════════════════════
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function getWeekRange() {
+  const base = new Date();
+  const day  = base.getDay() || 7;
+  const mon  = new Date(base); mon.setDate(base.getDate() - day + 1);
+  const sun  = new Date(mon);  sun.setDate(mon.getDate() + 6);
+  return { start: mon.toISOString().split('T')[0], end: sun.toISOString().split('T')[0] };
+}
+
+function getMonthRange(year, month) {
+  const start = `${year}-${String(month).padStart(2,'0')}-01`;
+  const last  = new Date(year, month, 0).getDate();
+  return { start, end: `${year}-${String(month).padStart(2,'0')}-${String(last).padStart(2,'0')}` };
+}
+
+function fmtDate(s) {
+  const [y,m,d] = s.split('-'); return `${d}.${m}.${y}`;
+}
+
+function fmtMoney(n) {
+  return n.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' MDL';
+}
+
+const MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
+                'Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
 
 // ═══════════════════════════════════════
 // RENDER ROUTER
@@ -786,7 +794,7 @@ function render() {
   user.role === 'admin' ? renderAdmin() : renderAvocat(user);
 }
 
-function setPeriod(p) { state.period = p; render(); }
+function setPeriod(p)      { state.period = p; render(); }
 function setFilterUser(id) { state.filterUser = id; render(); }
 
 // ═══════════════════════════════════════
@@ -817,14 +825,12 @@ function startTimer() {
 function stopTimer() {
   const start = getTimerStart();
   if (!start) return;
-  const elapsedMs = Date.now() - start;
-  const elapsedH  = elapsedMs / 3600000;
-  const rounded   = Math.max(0.1, Math.round(elapsedH * 10) / 10);
+  const elapsedH = (Date.now() - start) / 3600000;
+  const rounded  = Math.max(0.1, Math.round(elapsedH * 10) / 10);
   localStorage.removeItem('pontaj_timer_start');
   clearInterval(timerInterval);
   timerInterval = null;
   render();
-  // Pre-fill the form
   const hoursEl = document.getElementById('f-hours');
   const descEl  = document.getElementById('f-desc');
   if (hoursEl) hoursEl.value = rounded;
@@ -841,10 +847,7 @@ function tickTimer() {
   }, 1000);
 }
 
-// Resume tick if timer was already running
-(function resumeTimer() {
-  if (getTimerStart()) tickTimer();
-})();
+(function resumeTimer() { if (getTimerStart()) tickTimer(); })();
 
 // ═══════════════════════════════════════
 // AVOCAT VIEW
@@ -859,12 +862,12 @@ function renderAvocat(user) {
   const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
   const range  = state.period === 'week' ? wRange : mRange;
 
-  const all     = getEntries();
-  const entries = filterEntries(all, range.start, range.end, user.id)
+  const entries = filterEntries(allEntries, range.start, range.end, user.id)
                     .sort((a,b) => b.date.localeCompare(a.date));
 
-  const hours   = sumH(entries);
-  const money   = entries.reduce((s, e) => s + (e.fixedPrice != null ? e.fixedPrice : Number(e.hours) * user.rate), 0);
+  const hours = sumH(entries);
+  const money = entries.reduce((s, e) =>
+    s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * user.rate), 0);
 
   const periodLabel = state.period === 'week'
     ? `${fmtDate(wRange.start)} — ${fmtDate(wRange.end)}`
@@ -964,7 +967,7 @@ function renderAvocat(user) {
                   <td class="td-date">${fmtDate(e.date)}</td>
                   <td style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
                   <td>${e.description}</td>
-                  <td class="td-hours">${e.fixedPrice != null ? fmtMoney(e.fixedPrice) : Number(e.hours).toFixed(1) + 'h'}</td>
+                  <td class="td-hours">${e.fixed_price != null ? fmtMoney(e.fixed_price) : Number(e.hours).toFixed(1) + 'h'}</td>
                   <td><button class="btn-delete" onclick="deleteEntry('${e.id}')" title="Șterge">✕</button></td>
                 </tr>
               `).join('')}
@@ -991,16 +994,19 @@ function applyPreset() {
 }
 
 function clearPreset() {
-  document.getElementById('f-preset').value       = '';
-  document.getElementById('f-fixed-price').value  = '';
-  document.getElementById('f-fixed-type').value   = '';
+  const ps = document.getElementById('f-preset');
+  const fp = document.getElementById('f-fixed-price');
+  const ft = document.getElementById('f-fixed-type');
+  if (ps) ps.value = '';
+  if (fp) fp.value = '';
+  if (ft) ft.value = '';
 }
 
-function addEntry() {
-  const user        = getCurrentUser();
-  const date        = document.getElementById('f-date').value;
-  const client      = document.getElementById('f-client').value.trim();
-  const description = document.getElementById('f-desc').value.trim();
+async function addEntry() {
+  const user          = getCurrentUser();
+  const date          = document.getElementById('f-date').value;
+  const client        = document.getElementById('f-client').value.trim();
+  const description   = document.getElementById('f-desc').value.trim();
   const fixedPriceRaw = document.getElementById('f-fixed-price').value;
   const fixedType     = document.getElementById('f-fixed-type').value || null;
   const isFixed       = fixedPriceRaw !== '';
@@ -1008,23 +1014,32 @@ function addEntry() {
   const hours         = isFixed ? 0 : parseFloat(document.getElementById('f-hours').value);
 
   if (!date || !description) {
-    alert('Completează data și descrierea activității.');
-    return;
+    alert('Completează data și descrierea activității.'); return;
   }
   if (!isFixed && (!hours || hours <= 0)) {
-    alert('Completează numărul de ore sau alege o activitate predefinită.');
-    return;
+    alert('Completează numărul de ore sau alege o activitate predefinită.'); return;
   }
 
-  const entries = getEntries();
-  entries.push({ id: Date.now().toString(), userId: user.id, date, hours, client, description, fixedPrice, fixedType });
-  saveEntries(entries);
+  const btn = document.querySelector('.add-form .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  const { data, error } = await db.from('entries').insert({
+    user_id:     user.id,
+    date, hours, client, description,
+    fixed_price: fixedPrice,
+    fixed_type:  fixedType,
+  }).select().single();
+
+  if (error) { alert(error.message); if (btn) { btn.disabled = false; btn.textContent = 'Adaugă'; } return; }
+  allEntries.unshift(data);
   render();
 }
 
-function deleteEntry(id) {
+async function deleteEntry(id) {
   if (!confirm('Ștergi această intrare?')) return;
-  saveEntries(getEntries().filter(e => e.id !== id));
+  const { error } = await db.from('entries').delete().eq('id', id);
+  if (error) { alert(error.message); return; }
+  allEntries = allEntries.filter(e => e.id !== id);
   render();
 }
 
@@ -1038,9 +1053,8 @@ function renderAdmin() {
   const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
   const range  = state.period === 'week' ? wRange : mRange;
 
-  const allEntries = getEntries();
-  const lawyers    = getUsers().filter(u => u.role === 'avocat');
-  const userMap    = Object.fromEntries(getUsers().map(u => [u.id, u]));
+  const lawyers  = allUsers.filter(u => u.role === 'avocat');
+  const userMap  = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
   const filtered = filterEntries(allEntries, range.start, range.end,
                      state.filterUser === 'all' ? null : state.filterUser)
@@ -1066,14 +1080,23 @@ function renderAdmin() {
 
     <div class="lawyer-grid">
       ${lawyers.map(u => {
-        const uH = sumH(filterEntries(allEntries, range.start, range.end, u.id));
-        const uM = uH * u.rate;
+        const uEntries = filterEntries(allEntries, range.start, range.end, u.id);
+        const uH = sumH(uEntries);
+        const uM = uEntries.reduce((s,e) => s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * u.rate), 0);
         return `
           <div class="lsc ${state.filterUser===u.id?'active':''}" onclick="setFilterUser('${u.id}')">
             <div class="lsc-name">${u.name}</div>
             <div class="lsc-row"><span>Ore</span><span>${uH.toFixed(1)} h</span></div>
             <div class="lsc-row"><span>Total</span><span>${fmtMoney(uM)}</span></div>
-            <div class="lsc-row"><span>Tarif</span><span>${u.rate} MDL/h</span></div>
+            <div class="lsc-row">
+              <span>Tarif</span>
+              <span>
+                <input class="rate-input" type="number" value="${u.rate}" min="0" step="50"
+                  onclick="event.stopPropagation()"
+                  onchange="event.stopPropagation(); updateRate('${u.id}', this.value)">
+                MDL/h
+              </span>
+            </div>
           </div>
         `;
       }).join('')}
@@ -1083,19 +1106,9 @@ function renderAdmin() {
       </div>
     </div>
 
-    <div class="add-user-form">
-      <div class="form-title">Adaugă avocat nou</div>
-      <div class="add-user-row">
-        <div class="field" style="flex:1;min-width:160px">
-          <label>Nume complet</label>
-          <input type="text" id="u-name" placeholder="Prenume Nume">
-        </div>
-        <div class="field" style="width:130px">
-          <label>Tarif (MDL/h)</label>
-          <input type="number" id="u-rate" value="150" min="0" step="50">
-        </div>
-        <button class="btn-primary" onclick="addUser()">Adaugă avocat</button>
-      </div>
+    <div class="invite-box">
+      <p>Avocații noi se înregistrează la <strong>bunpartener.md/pontaj</strong> → fila "Cont nou".</p>
+      <button class="btn-ghost" onclick="navigator.clipboard.writeText('bunpartener.md/pontaj').then(()=>this.textContent='Copiat!').catch(()=>{})">Copiază link</button>
     </div>
 
     <div class="table-wrap">
@@ -1114,21 +1127,20 @@ function renderAdmin() {
               <th>Avocat</th>
               <th>Client / Dosar</th>
               <th>Descriere</th>
-              <th style="width:60px">Ore</th>
-              <th style="width:100px">Valoare</th>
+              <th style="width:90px">Ore / Valoare</th>
               <th style="width:40px"></th>
             </tr></thead>
             <tbody>
               ${filtered.map(e => {
-                const u = userMap[e.userId];
+                const u = userMap[e.user_id];
+                const val = e.fixed_price != null ? fmtMoney(e.fixed_price) : Number(e.hours).toFixed(1) + 'h';
                 return `
                   <tr>
                     <td class="td-date">${fmtDate(e.date)}</td>
                     <td style="font-weight:500;font-size:13px">${u?.name || '—'}</td>
                     <td style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
                     <td style="font-size:14px">${e.description}</td>
-                    <td class="td-hours">${Number(e.hours).toFixed(1)}</td>
-                    <td class="td-money">${fmtMoney(Number(e.hours) * (u?.rate || 0))}</td>
+                    <td class="td-hours">${val}</td>
                     <td><button class="btn-delete" onclick="deleteEntry('${e.id}')" title="Șterge">✕</button></td>
                   </tr>
                 `;
@@ -1140,14 +1152,13 @@ function renderAdmin() {
   `;
 }
 
-function addUser() {
-  const name = document.getElementById('u-name').value.trim();
-  const rate = parseFloat(document.getElementById('u-rate').value) || 150;
-  if (!name) { alert('Introdu numele avocatului.'); return; }
-  const users = getUsers();
-  users.push({ id: 'u' + Date.now(), name, role: 'avocat', rate });
-  saveUsers(users);
-  render();
+async function updateRate(userId, rawRate) {
+  const rate = parseFloat(rawRate);
+  if (!rate || rate < 0) return;
+  const { error } = await db.from('profiles').update({ rate }).eq('id', userId);
+  if (error) { alert(error.message); return; }
+  const u = allUsers.find(u => u.id === userId);
+  if (u) u.rate = rate;
 }
 
 // ═══════════════════════════════════════
@@ -1222,7 +1233,6 @@ function showReportForm() {
 }
 
 function generateAct() {
-  // Read form values
   const firm         = document.getElementById('rf-firm').value.trim();
   const coordinator  = document.getElementById('rf-coordinator').value.trim();
   const idno         = document.getElementById('rf-idno').value.trim();
@@ -1233,7 +1243,6 @@ function generateAct() {
   const contractNr   = document.getElementById('rf-contract-nr').value.trim();
   const contractDate = document.getElementById('rf-contract-date').value;
 
-  // Persist settings
   const settings = { firm, coordinator, idno, ibanMdl, bank,
                      lastContractNr: contractNr, lastContractDate: contractDate,
                      lastClient: clientName };
@@ -1244,39 +1253,33 @@ function generateAct() {
   const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
   const range  = state.period === 'week' ? wRange : mRange;
 
-  const allEntries = getEntries();
-  const lawyers    = getUsers().filter(u => u.role === 'avocat');
-  const userMap    = Object.fromEntries(getUsers().map(u => [u.id, u]));
+  const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
-  // Flatten all entries in period, sorted by date
   const entries = filterEntries(allEntries, range.start, range.end, null)
                     .sort((a,b) => a.date.localeCompare(b.date));
 
   const totalHours = sumH(entries);
 
-  // Per-entry money helpers
   function entryOnorariu(e) {
-    if (e.fixedType === 'cheltuiala') return 0;
-    if (e.fixedPrice != null) return e.fixedPrice;
-    return Number(e.hours) * (userMap[e.userId]?.rate || 0);
+    if (e.fixed_type === 'cheltuiala') return 0;
+    if (e.fixed_price != null) return e.fixed_price;
+    return Number(e.hours) * (userMap[e.user_id]?.rate || 0);
   }
   function entryCheltuiala(e) {
-    return (e.fixedType === 'cheltuiala' && e.fixedPrice != null) ? e.fixedPrice : 0;
+    return (e.fixed_type === 'cheltuiala' && e.fixed_price != null) ? e.fixed_price : 0;
   }
 
   const totalOnorariu   = entries.reduce((s, e) => s + entryOnorariu(e), 0);
   const totalCheltuieli = entries.reduce((s, e) => s + entryCheltuiala(e), 0);
   const grandTotal      = totalOnorariu + totalCheltuieli;
   const birouExtra      = Math.floor(grandTotal / 4000) * 100;
-  const finalTotal      = grandTotal + birouExtra;
 
   const contractDateFmt = contractDate ? fmtDate(contractDate) : '___________';
-  const dayNow   = String(now.getDate()).padStart(2,'0');
-  const monthNow = MONTHS[now.getMonth()].toLowerCase();
-  const yearNow  = now.getFullYear();
-
-  const firmDisplay = firm || 'BIROUL ASOCIAT DE AVOCAȚI';
-  const coordDisplay = coordinator || '___________';
+  const dayNow    = String(now.getDate()).padStart(2,'0');
+  const monthNow  = MONTHS[now.getMonth()].toLowerCase();
+  const yearNow   = now.getFullYear();
+  const firmDisplay   = firm || 'BIROUL ASOCIAT DE AVOCAȚI';
+  const coordDisplay  = coordinator || '___________';
   const clientDisplay = clientName || '___________';
   const periodDisplay = `${fmtDate(range.start)} – ${fmtDate(range.end)}`;
 
@@ -1290,13 +1293,9 @@ function generateAct() {
   document.getElementById('modal-body').innerHTML = `
     <div id="act-document" style="
       font-family: 'Times New Roman', Times, serif;
-      font-size: 11pt;
-      color: #000;
-      background: #fff;
-      padding: 20px 28px;
-      line-height: 1.5;
+      font-size: 11pt; color: #000; background: #fff;
+      padding: 20px 28px; line-height: 1.5;
     ">
-      <!-- HEADER -->
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-size:15pt; font-weight:bold; letter-spacing:0.05em;">ACT</div>
         <div style="font-weight:bold;">DE PREDARE-PRIMIRE A SERVICIILOR JURIDICE PRESTATE</div>
@@ -1304,29 +1303,23 @@ function generateAct() {
         <div style="margin-top:6px;">pentru perioada ${periodDisplay}</div>
       </div>
 
-      <!-- DATE + CITY -->
       <div style="display:flex; justify-content:space-between; margin-bottom:18px;">
         <div>„${dayNow}" ${monthNow} ${yearNow}</div>
         <div>or. Chișinău</div>
       </div>
 
-      <!-- PARTIES -->
       <p style="text-align:justify; margin-bottom:12px;">
         <strong>${firmDisplay}</strong>${coordinator ? ` (BUNPartener), în persoana avocatului coordonator <strong>${coordDisplay}</strong>, care activează în baza Deciziei de fondare și a Contractului de asociere,` : ','} denumit în continuare <strong>EXECUTOR</strong>, pe de o parte, și
       </p>
       <p style="text-align:justify; margin-bottom:18px;">
         <strong>${clientDisplay}</strong>${clientDet ? ', ' + clientDet : ''}, denumit în continuare <strong>„Client"</strong>, denumiţi în continuare <strong>„Părţi"</strong>.
       </p>
-
-      <!-- INTRO -->
       <p style="text-align:justify; margin-bottom:18px;">
         au încheiat prezentul <strong>ACT</strong> de predare-primire a serviciilor juridice prestate și a lucrărilor executate${contractNr ? ` conform Contractului de asistență juridică nr. <strong>${contractNr}</strong> din ${contractDateFmt}` : ''} pentru perioada ${periodDisplay}.
       </p>
 
-      <!-- SECTION 1 -->
       <p style="margin-bottom:10px;"><strong>1. EXECUTORUL</strong> a acordat, în perioada de referință, servicii de consultanță și asistență juridică CLIENTULUI, după cum urmează:</p>
 
-      <!-- TABLE -->
       <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:18px;">
         <thead>
           <tr style="background:#f0f0f0;">
@@ -1340,11 +1333,10 @@ function generateAct() {
         </thead>
         <tbody>
           ${entries.map((e, i) => {
-            const u = userMap[e.userId];
-            const isFixed = e.fixedPrice != null;
+            const u    = userMap[e.user_id];
             const hon  = entryOnorariu(e);
             const chel = entryCheltuiala(e);
-            const hoursDisplay = isFixed ? '—' : `${Number(e.hours).toFixed(1)} ore`;
+            const hoursDisplay = e.fixed_price != null ? '—' : `${Number(e.hours).toFixed(1)} ore`;
             return `
               <tr>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${i + 1}.</td>
@@ -1362,7 +1354,6 @@ function generateAct() {
             <td style="border:1px solid #000;padding:5px 6px;" colspan="4">Cheltuieli materiale de birou</td>
             <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${fmtMoney(birouExtra)}</td>
           </tr>` : ''}
-          <!-- TOTAL ROW -->
           <tr style="font-weight:bold; background:#f8f8f8;">
             <td colspan="3" style="border:1px solid #000;padding:5px 8px;text-align:right;">
               TOTAL${contractNr ? ` (Contractul nr. ${contractNr})` : ''}:
@@ -1374,17 +1365,13 @@ function generateAct() {
         </tbody>
       </table>
 
-      <!-- SECTIONS 2-4 -->
       <p style="margin-bottom:8px;"><strong>2. CLIENTUL confirmă:</strong></p>
       <p style="margin-bottom:4px;text-align:justify;">a) faptul lipsei pretenţiilor de ordin material şi/sau juridic faţă de EXECUTOR pentru perioada vizată (${periodDisplay}),</p>
       <p style="margin-bottom:4px;text-align:justify;">b) disponibilitatea de a achita cheltuielile suportate de către ${firmDisplay} în conformitate cu condițiile contractuale prestabilite și potrivit prezentului Act,</p>
       <p style="margin-bottom:16px;text-align:justify;">c) acordarea încrederii față de avocat referitor la asigurarea asistenței și reprezentării juridice în continuare a intereselor CLIENTULUI.</p>
-
       <p style="margin-bottom:12px;text-align:justify;"><strong>3. EXECUTORUL</strong> își asumă obligația${contractNr ? `, conform contractului de asistență juridică nr. ${contractNr} din ${contractDateFmt},` : ''} să asigure în continuare asistența și reprezentarea juridică a intereselor CLIENTULUI.</p>
-
       <p style="margin-bottom:28px;text-align:justify;"><strong>4.</strong> Prezentul act de predare-primire a lucrărilor executate intră în vigoare din momentul semnării.</p>
 
-      <!-- SIGNATURE BLOCK -->
       <table style="width:100%;border-collapse:collapse;font-size:10pt;">
         <tr>
           <td style="width:50%;vertical-align:top;padding-right:20px;">
@@ -1403,8 +1390,7 @@ function generateAct() {
             <br><br>
             __________________________________________<br>
             <span style="font-size:9pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(semnătura)</span><br>
-            Nume, prenume: <strong>${clientDisplay}</strong><br>
-            Poziția: client
+            Nume, prenume: <strong>${clientDisplay}</strong><br>Poziția: client
           </td>
         </tr>
       </table>
@@ -1417,39 +1403,34 @@ function generateAct() {
 function downloadReport() {
   const el = document.getElementById('act-document');
   if (!el) return;
-
-  const now = new Date();
-  const date = now.toISOString().split('T')[0];
+  const now      = new Date();
+  const date     = now.toISOString().split('T')[0];
   const settings = JSON.parse(localStorage.getItem('pontaj_settings') || '{}');
-  const clientSlug = (settings.lastClient || 'client').toLowerCase()
-    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  const filename = `act-predare-primire-${clientSlug}-${date}.pdf`;
-
-  const opt = {
+  const slug     = (settings.lastClient || 'client').toLowerCase()
+                     .replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  html2pdf().set({
     margin: [15, 18, 15, 18],
-    filename,
-    image: { type: 'jpeg', quality: 0.98 },
+    filename: `act-predare-primire-${slug}-${date}.pdf`,
+    image:    { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-  };
-
-  html2pdf().set(opt).from(el).save();
+    jsPDF:    { unit: 'mm', format: 'a4', orientation: 'portrait' },
+  }).from(el).save();
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').style.display = 'none';
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
+function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
 
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
 
-renderLogin();
-if (getCurrentUser()) showApp();
+db.auth.onAuthStateChange(async (event, session) => {
+  if (session) {
+    await loadAll();
+  } else {
+    showLoginScreen();
+  }
+});
 </script>
 </body>
 </html>
