@@ -1241,7 +1241,7 @@ async function deleteEntry(id) {
 // ═══════════════════════════════════════
 
 function renderAdmin() {
-  const lawyers  = allUsers.filter(u => u.role === 'avocat');
+  const lawyers  = allUsers;
   const userMap  = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
   const filtered = filterEntries(allEntries, state.dateStart, state.dateEnd,
