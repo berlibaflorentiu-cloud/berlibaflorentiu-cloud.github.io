@@ -7,7 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
+    onerror="document.getElementById('loading-screen').style.display='none';document.getElementById('auth-screen').style.display='flex';document.getElementById('auth-screen').innerHTML='<div style=\'text-align:center;padding:60px 24px;font-family:DM Sans,sans-serif;color:#C8A96E\'><div style=\'font-size:48px;letter-spacing:0.2em;font-family:Cormorant Garamond,serif;margin-bottom:24px\'>PONTAJ</div><p style=\'color:#8B949E;font-size:14px\'>Eroare: nu s-a putut încărca librăria Supabase.<br>Verificați conexiunea la internet și reîncărcați pagina.</p><button onclick=\'location.reload()\' style=\'margin-top:20px;padding:10px 24px;background:#C8A96E;border:none;border-radius:7px;color:#0D1117;font-size:14px;font-weight:600;cursor:pointer\'>Reîncarcă</button></div>'">
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -655,13 +657,28 @@
 </div>
 
 <script>
+// ── Early loading fallback (runs before any external lib is needed) ──
+window._earlyTimeout = setTimeout(function() {
+  var ls = document.getElementById('loading-screen');
+  var as = document.getElementById('auth-screen');
+  if (ls) ls.style.display = 'none';
+  if (as) as.style.display = 'flex';
+}, 6000);
+
 // ═══════════════════════════════════════
 // SUPABASE
 // ═══════════════════════════════════════
 
 const SUPA_URL = 'https://beuseulqtgtesavswxyy.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJldXNldWxxdGd0ZXNhdnN3eHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzM0MzYsImV4cCI6MjA5NzY0OTQzNn0.IV-pknNPnOyeRgZDi5sV413HHrPbqbtdPY_sxQ-HORc';
-const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let db;
+try {
+  db = supabase.createClient(SUPA_URL, SUPA_KEY);
+} catch(e) {
+  clearTimeout(window._earlyTimeout);
+  showLoginScreen();
+}
 
 // ═══════════════════════════════════════
 // GLOBAL STATE
@@ -1495,16 +1512,16 @@ function handleOverlayClick(e) { if (e.target === document.getElementById('modal
 // INIT
 // ═══════════════════════════════════════
 
-const loadingTimeout = setTimeout(() => showLoginScreen(), 8000);
-
-db.auth.onAuthStateChange(async (event, session) => {
-  clearTimeout(loadingTimeout);
-  if (session) {
-    await loadAll();
-  } else {
-    showLoginScreen();
-  }
-});
+if (db) {
+  db.auth.onAuthStateChange(async (event, session) => {
+    clearTimeout(window._earlyTimeout);
+    if (session) {
+      await loadAll();
+    } else {
+      showLoginScreen();
+    }
+  });
+}
 </script>
 </body>
 </html>
