@@ -732,6 +732,15 @@ const MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
 
 const state = { period: 'week', filterUser: 'all' };
 
+const PRESETS = [
+  { label: 'Întrevederea la Penitenciar',              price: 1500, type: 'onorariu' },
+  { label: 'Ședința de judecată',                      price: 2000, type: 'onorariu' },
+  { label: 'Acțiunea de urmărire penală',              price: 1800, type: 'onorariu' },
+  { label: 'Cheltuieli transport – ședință Chișinău',  price:  100, type: 'cheltuiala' },
+  { label: 'Cheltuieli de deplasare la Bălți',         price: 1000, type: 'cheltuiala' },
+  { label: 'Cheltuieli de deplasare la Soroca',        price: 1500, type: 'cheltuiala' },
+];
+
 // ═══════════════════════════════════════
 // LOGIN / LOGOUT
 // ═══════════════════════════════════════
@@ -855,7 +864,7 @@ function renderAvocat(user) {
                     .sort((a,b) => b.date.localeCompare(a.date));
 
   const hours   = sumH(entries);
-  const money   = hours * user.rate;
+  const money   = entries.reduce((s, e) => s + (e.fixedPrice != null ? e.fixedPrice : Number(e.hours) * user.rate), 0);
 
   const periodLabel = state.period === 'week'
     ? `${fmtDate(wRange.start)} — ${fmtDate(wRange.end)}`
@@ -917,9 +926,18 @@ function renderAvocat(user) {
           <label>Client / Dosar</label>
           <input type="text" id="f-client" placeholder="ex. SC Alpha SRL — dosar 142/2024">
         </div>
-        <div class="field">
+        <div class="field" style="grid-column:1/-1">
+          <label>Activitate predefinită</label>
+          <select id="f-preset" onchange="applyPreset()" style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit">
+            <option value="">— sau completează descriere proprie mai jos —</option>
+            ${PRESETS.map((p,i) => `<option value="${i}">${p.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="grid-column:1/-1">
           <label>Descriere activitate</label>
-          <input type="text" id="f-desc" placeholder="ex. Redactare contract, consultație, reprezentare..." onkeydown="if(event.key==='Enter')addEntry()">
+          <input type="text" id="f-desc" placeholder="ex. Redactare contract, consultație, reprezentare..." oninput="clearPreset()" onkeydown="if(event.key==='Enter')addEntry()">
+          <input type="hidden" id="f-fixed-price" value="">
+          <input type="hidden" id="f-fixed-type" value="">
         </div>
         <button class="btn-primary" style="padding:9px 22px;font-size:14px" onclick="addEntry()">Adaugă</button>
       </div>
@@ -937,7 +955,7 @@ function renderAvocat(user) {
               <th style="width:100px">Data</th>
               <th>Client / Dosar</th>
               <th>Descriere</th>
-              <th style="width:70px">Ore</th>
+              <th style="width:90px">Ore / Valoare</th>
               <th style="width:40px"></th>
             </tr></thead>
             <tbody>
@@ -946,7 +964,7 @@ function renderAvocat(user) {
                   <td class="td-date">${fmtDate(e.date)}</td>
                   <td style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
                   <td>${e.description}</td>
-                  <td class="td-hours">${Number(e.hours).toFixed(1)}</td>
+                  <td class="td-hours">${e.fixedPrice != null ? fmtMoney(e.fixedPrice) : Number(e.hours).toFixed(1) + 'h'}</td>
                   <td><button class="btn-delete" onclick="deleteEntry('${e.id}')" title="Șterge">✕</button></td>
                 </tr>
               `).join('')}
@@ -957,20 +975,49 @@ function renderAvocat(user) {
   `;
 }
 
-function addEntry() {
-  const user  = getCurrentUser();
-  const date  = document.getElementById('f-date').value;
-  const hours = parseFloat(document.getElementById('f-hours').value);
-  const client = document.getElementById('f-client').value.trim();
-  const description = document.getElementById('f-desc').value.trim();
+function applyPreset() {
+  const sel = document.getElementById('f-preset');
+  if (!sel.value) {
+    document.getElementById('f-fixed-price').value = '';
+    document.getElementById('f-fixed-type').value  = '';
+    return;
+  }
+  const p = PRESETS[parseInt(sel.value)];
+  document.getElementById('f-desc').value        = p.label;
+  document.getElementById('f-fixed-price').value = p.price;
+  document.getElementById('f-fixed-type').value  = p.type;
+  const hoursEl = document.getElementById('f-hours');
+  if (hoursEl) hoursEl.value = '';
+}
 
-  if (!date || !hours || hours <= 0 || !description) {
-    alert('Completează data, numărul de ore și descrierea activității.');
+function clearPreset() {
+  document.getElementById('f-preset').value       = '';
+  document.getElementById('f-fixed-price').value  = '';
+  document.getElementById('f-fixed-type').value   = '';
+}
+
+function addEntry() {
+  const user        = getCurrentUser();
+  const date        = document.getElementById('f-date').value;
+  const client      = document.getElementById('f-client').value.trim();
+  const description = document.getElementById('f-desc').value.trim();
+  const fixedPriceRaw = document.getElementById('f-fixed-price').value;
+  const fixedType     = document.getElementById('f-fixed-type').value || null;
+  const isFixed       = fixedPriceRaw !== '';
+  const fixedPrice    = isFixed ? Number(fixedPriceRaw) : null;
+  const hours         = isFixed ? 0 : parseFloat(document.getElementById('f-hours').value);
+
+  if (!date || !description) {
+    alert('Completează data și descrierea activității.');
+    return;
+  }
+  if (!isFixed && (!hours || hours <= 0)) {
+    alert('Completează numărul de ore sau alege o activitate predefinită.');
     return;
   }
 
   const entries = getEntries();
-  entries.push({ id: Date.now().toString(), userId: user.id, date, hours, client, description });
+  entries.push({ id: Date.now().toString(), userId: user.id, date, hours, client, description, fixedPrice, fixedType });
   saveEntries(entries);
   render();
 }
@@ -1206,10 +1253,22 @@ function generateAct() {
                     .sort((a,b) => a.date.localeCompare(b.date));
 
   const totalHours = sumH(entries);
-  const totalMoney = entries.reduce((s,e) => {
-    const u = userMap[e.userId];
-    return s + Number(e.hours) * (u?.rate || 0);
-  }, 0);
+
+  // Per-entry money helpers
+  function entryOnorariu(e) {
+    if (e.fixedType === 'cheltuiala') return 0;
+    if (e.fixedPrice != null) return e.fixedPrice;
+    return Number(e.hours) * (userMap[e.userId]?.rate || 0);
+  }
+  function entryCheltuiala(e) {
+    return (e.fixedType === 'cheltuiala' && e.fixedPrice != null) ? e.fixedPrice : 0;
+  }
+
+  const totalOnorariu   = entries.reduce((s, e) => s + entryOnorariu(e), 0);
+  const totalCheltuieli = entries.reduce((s, e) => s + entryCheltuiala(e), 0);
+  const grandTotal      = totalOnorariu + totalCheltuieli;
+  const birouExtra      = Math.floor(grandTotal / 4000) * 100;
+  const finalTotal      = grandTotal + birouExtra;
 
   const contractDateFmt = contractDate ? fmtDate(contractDate) : '___________';
   const dayNow   = String(now.getDate()).padStart(2,'0');
@@ -1282,26 +1341,35 @@ function generateAct() {
         <tbody>
           ${entries.map((e, i) => {
             const u = userMap[e.userId];
-            const money = Number(e.hours) * (u?.rate || 0);
+            const isFixed = e.fixedPrice != null;
+            const hon  = entryOnorariu(e);
+            const chel = entryCheltuiala(e);
+            const hoursDisplay = isFixed ? '—' : `${Number(e.hours).toFixed(1)} ore`;
             return `
               <tr>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${i + 1}.</td>
                 <td style="border:1px solid #000;padding:5px 6px;">${e.description}${e.client ? ' <em>(' + e.client + ')</em>' : ''}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${u?.name || '—'}</td>
-                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${Number(e.hours).toFixed(1)} ore</td>
-                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${fmtMoney(money)}</td>
-                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">—</td>
+                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${hoursDisplay}</td>
+                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${hon > 0 ? fmtMoney(hon) : '—'}</td>
+                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${chel > 0 ? fmtMoney(chel) : '—'}</td>
               </tr>
             `;
           }).join('')}
+          ${birouExtra > 0 ? `
+          <tr>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${entries.length + 1}.</td>
+            <td style="border:1px solid #000;padding:5px 6px;" colspan="4">Cheltuieli materiale de birou</td>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${fmtMoney(birouExtra)}</td>
+          </tr>` : ''}
           <!-- TOTAL ROW -->
           <tr style="font-weight:bold; background:#f8f8f8;">
             <td colspan="3" style="border:1px solid #000;padding:5px 8px;text-align:right;">
               TOTAL${contractNr ? ` (Contractul nr. ${contractNr})` : ''}:
             </td>
-            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalHours.toFixed(1)} ore</td>
-            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${fmtMoney(totalMoney)}</td>
-            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">—</td>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalHours > 0 ? totalHours.toFixed(1) + ' ore' : '—'}</td>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${fmtMoney(totalOnorariu)}</td>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalCheltuieli + birouExtra > 0 ? fmtMoney(totalCheltuieli + birouExtra) : '—'}</td>
           </tr>
         </tbody>
       </table>
