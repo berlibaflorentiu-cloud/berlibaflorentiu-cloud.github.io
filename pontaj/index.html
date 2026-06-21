@@ -577,6 +577,10 @@
 <div id="loading-screen">
   <div class="loading-logo">PONTAJ</div>
   <div class="loading-dots"><span></span><span></span><span></span></div>
+  <div id="loading-cancel" style="display:none;margin-top:24px;text-align:center">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Conexiunea durează mai mult decât de obicei...</p>
+    <button onclick="showLoginScreen()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 20px;border-radius:7px;cursor:pointer">Mergi la autentificare</button>
+  </div>
 </div>
 
 <!-- ══ AUTH ══ -->
@@ -658,12 +662,16 @@
 
 <script>
 // ── Early loading fallback (runs before any external lib is needed) ──
+window._cancelTimeout = setTimeout(function() {
+  var btn = document.getElementById('loading-cancel');
+  if (btn) btn.style.display = 'block';
+}, 3000);
 window._earlyTimeout = setTimeout(function() {
   var ls = document.getElementById('loading-screen');
   var as = document.getElementById('auth-screen');
   if (ls) ls.style.display = 'none';
   if (as) as.style.display = 'flex';
-}, 6000);
+}, 12000);
 
 // ═══════════════════════════════════════
 // SUPABASE
@@ -807,6 +815,8 @@ async function loadAll() {
 }
 
 function showLoginScreen() {
+  clearTimeout(window._earlyTimeout);
+  clearTimeout(window._cancelTimeout);
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display    = 'flex';
   document.getElementById('app-shell').style.display      = 'none';
@@ -1523,6 +1533,7 @@ function handleOverlayClick(e) { if (e.target === document.getElementById('modal
 if (db) {
   db.auth.onAuthStateChange(async (event, session) => {
     clearTimeout(window._earlyTimeout);
+    clearTimeout(window._cancelTimeout);
     if (session) {
       await loadAll();
     } else {
