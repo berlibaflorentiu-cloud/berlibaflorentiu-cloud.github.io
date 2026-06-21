@@ -777,13 +777,16 @@ async function register() {
 async function logout() {
   await db.auth.signOut();
   currentUser = null; allUsers = []; allEntries = [];
+  localStorage.removeItem('pontaj_profile');
+  localStorage.removeItem('pontaj_users_cache');
+  localStorage.removeItem('pontaj_entries_cache');
 }
 
 // ═══════════════════════════════════════
 // LOAD DATA & SHOW APP
 // ═══════════════════════════════════════
 
-function dbTimeout(promise, ms = 12000) {
+function dbTimeout(promise, ms = 14000) {
   return Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
@@ -792,25 +795,69 @@ function dbTimeout(promise, ms = 12000) {
 
 async function loadAll() {
   try {
-    const { data: { user } } = await dbTimeout(db.auth.getUser());
+    // Auth check is fast (separate service from DB)
+    const { data: { user } } = await dbTimeout(db.auth.getUser(), 8000);
     if (!user) { showLoginScreen(); return; }
 
+    // Use cached profile to show the app instantly on return visits
+    const cached = localStorage.getItem('pontaj_profile');
+    if (cached) {
+      currentUser = JSON.parse(cached);
+      allUsers    = JSON.parse(localStorage.getItem('pontaj_users_cache')  || '[]');
+      allEntries  = JSON.parse(localStorage.getItem('pontaj_entries_cache') || '[]');
+      showApp();
+      // Refresh in background — user already sees the UI
+      refreshInBackground(user.id);
+    } else {
+      // First ever login — must wait for DB
+      await fetchAndShow(user.id);
+    }
+  } catch (e) {
+    showLoginScreen();
+  }
+}
+
+async function fetchAndShow(userId) {
+  try {
     const { data: profile, error: pe } = await dbTimeout(
-      db.from('profiles').select('*').eq('id', user.id).single()
+      db.from('profiles').select('*').eq('id', userId).single()
     );
     if (!profile || pe) { db.auth.signOut(); showLoginScreen(); return; }
     currentUser = profile;
+    localStorage.setItem('pontaj_profile', JSON.stringify(profile));
 
     const [usersRes, entriesRes] = await dbTimeout(Promise.all([
       db.from('profiles').select('*').order('name'),
       db.from('entries').select('*').order('date', { ascending: false })
     ]));
-    allUsers   = usersRes.data  || [];
+    allUsers   = usersRes.data || [];
     allEntries = entriesRes.data || [];
-
+    localStorage.setItem('pontaj_users_cache',   JSON.stringify(allUsers));
+    localStorage.setItem('pontaj_entries_cache', JSON.stringify(allEntries));
     showApp();
   } catch (e) {
     showLoginScreen();
+  }
+}
+
+async function refreshInBackground(userId) {
+  try {
+    const [profileRes, usersRes, entriesRes] = await Promise.all([
+      db.from('profiles').select('*').eq('id', userId).single(),
+      db.from('profiles').select('*').order('name'),
+      db.from('entries').select('*').order('date', { ascending: false })
+    ]);
+    if (profileRes.data) {
+      currentUser = profileRes.data;
+      localStorage.setItem('pontaj_profile', JSON.stringify(currentUser));
+    }
+    allUsers   = usersRes.data   || [];
+    allEntries = entriesRes.data || [];
+    localStorage.setItem('pontaj_users_cache',   JSON.stringify(allUsers));
+    localStorage.setItem('pontaj_entries_cache', JSON.stringify(allEntries));
+    render(); // Re-render silently with fresh data
+  } catch (e) {
+    // Silent — cached data already showing
   }
 }
 
