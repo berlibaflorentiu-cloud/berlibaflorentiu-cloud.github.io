@@ -759,12 +759,17 @@ async function logout() {
 // ═══════════════════════════════════════
 
 async function loadAll() {
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) { showLoginScreen(); return; }
+  try {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) { showLoginScreen(); return; }
 
-  const { data: profile, error: pe } = await db.from('profiles').select('*').eq('id', user.id).single();
-  if (!profile || pe) { await db.auth.signOut(); return; }
-  currentUser = profile;
+    const { data: profile, error: pe } = await db.from('profiles').select('*').eq('id', user.id).single();
+    if (!profile || pe) { await db.auth.signOut(); showLoginScreen(); return; }
+    currentUser = profile;
+  } catch (e) {
+    showLoginScreen();
+    return;
+  }
 
   const [usersRes, entriesRes] = await Promise.all([
     db.from('profiles').select('*').order('name'),
@@ -1490,7 +1495,10 @@ function handleOverlayClick(e) { if (e.target === document.getElementById('modal
 // INIT
 // ═══════════════════════════════════════
 
+const loadingTimeout = setTimeout(() => showLoginScreen(), 8000);
+
 db.auth.onAuthStateChange(async (event, session) => {
+  clearTimeout(loadingTimeout);
   if (session) {
     await loadAll();
   } else {
