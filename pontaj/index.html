@@ -641,6 +641,7 @@
     <div class="header-brand">PONTAJ</div>
     <div class="header-right">
       <span class="header-user" id="headerUser"></span>
+      <span id="header-mode-toggle"></span>
       <button class="btn-ghost" onclick="logout()">Deconectare</button>
     </div>
   </header>
@@ -705,7 +706,7 @@ function initDateRange() {
   };
 }
 const _dr = initDateRange();
-const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all' };
+const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin' };
 
 const PRESETS = [
   { label: 'Întrevederea la Penitenciar',              price: 1500, type: 'onorariu' },
@@ -877,6 +878,7 @@ function showApp() {
   document.getElementById('app-shell').style.display      = '';
   document.getElementById('app-shell').classList.add('visible');
   document.getElementById('headerUser').textContent = currentUser.name;
+  updateModeToggle();
   render();
 }
 
@@ -931,10 +933,27 @@ const MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
 // RENDER ROUTER
 // ═══════════════════════════════════════
 
+function toggleViewMode() {
+  state.viewMode = state.viewMode === 'admin' ? 'avocat' : 'admin';
+  updateModeToggle();
+  render();
+}
+
+function updateModeToggle() {
+  const el = document.getElementById('header-mode-toggle');
+  if (!el || currentUser?.role !== 'admin') return;
+  const isAdmin = state.viewMode === 'admin';
+  el.innerHTML = `<button class="btn-ghost" onclick="toggleViewMode()" style="border-color:var(--gold);color:var(--gold)">${isAdmin ? '👤 Pontajul meu' : '⚙ Admin'}</button>`;
+}
+
 function render() {
   const user = getCurrentUser();
   if (!user) return;
-  user.role === 'admin' ? renderAdmin() : renderAvocat(user);
+  if (user.role === 'admin' && state.viewMode === 'admin') {
+    renderAdmin();
+  } else {
+    renderAvocat(user);
+  }
 }
 
 function setDateRange(start, end) { state.dateStart = start; state.dateEnd = end; render(); }
