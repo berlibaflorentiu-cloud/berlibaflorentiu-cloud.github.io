@@ -402,6 +402,53 @@
     }
     .btn-timer-stop:hover { opacity: 0.85; }
 
+    /* ── DATE RANGE PICKER ── */
+    .range-picker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .range-presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .preset-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .preset-chip:hover { border-color: var(--gold); color: var(--gold); }
+    .range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+    }
+    .range-date-input {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      padding: 4px 2px;
+    }
+    .range-date-input::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+    .range-sep { color: var(--muted); font-size: 14px; }
+
     .empty-state { text-align: center; padding: 56px 24px; color: var(--muted); }
     .empty-icon { font-size: 28px; margin-bottom: 12px; opacity: 0.5; }
     .empty-state p { font-size: 14px; line-height: 1.6; }
@@ -624,7 +671,16 @@ let currentUser = null;
 let allUsers    = [];
 let allEntries  = [];
 
-const state = { period: 'week', filterUser: 'all' };
+function initDateRange() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+  return {
+    start: `${y}-${String(m).padStart(2,'0')}-01`,
+    end:   now.toISOString().split('T')[0],
+  };
+}
+const _dr = initDateRange();
+const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all' };
 
 const PRESETS = [
   { label: 'Întrevederea la Penitenciar',              price: 1500, type: 'onorariu' },
@@ -794,8 +850,50 @@ function render() {
   user.role === 'admin' ? renderAdmin() : renderAvocat(user);
 }
 
-function setPeriod(p)      { state.period = p; render(); }
+function setDateRange(start, end) { state.dateStart = start; state.dateEnd = end; render(); }
 function setFilterUser(id) { state.filterUser = id; render(); }
+
+function quickRange(preset) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+  const today = now.toISOString().split('T')[0];
+  if (preset === 'week') {
+    const day = now.getDay() || 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - day + 1);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    setDateRange(mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]);
+  } else if (preset === 'month') {
+    const last = new Date(y, m, 0).getDate();
+    setDateRange(`${y}-${String(m).padStart(2,'0')}-01`, `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`);
+  } else if (preset === 'lastmonth') {
+    const pm = m === 1 ? 12 : m - 1, py = m === 1 ? y - 1 : y;
+    const last = new Date(py, pm, 0).getDate();
+    setDateRange(`${py}-${String(pm).padStart(2,'0')}-01`, `${py}-${String(pm).padStart(2,'0')}-${String(last).padStart(2,'0')}`);
+  } else if (preset === '30d') {
+    const from = new Date(now); from.setDate(now.getDate() - 29);
+    setDateRange(from.toISOString().split('T')[0], today);
+  }
+}
+
+function rangePicker() {
+  return `
+    <div class="range-picker">
+      <div class="range-presets">
+        <button class="preset-chip" onclick="quickRange('week')">Săpt. curentă</button>
+        <button class="preset-chip" onclick="quickRange('month')">Luna curentă</button>
+        <button class="preset-chip" onclick="quickRange('lastmonth')">Luna trecută</button>
+        <button class="preset-chip" onclick="quickRange('30d')">Ultimele 30 zile</button>
+      </div>
+      <div class="range-inputs">
+        <input type="date" class="range-date-input" value="${state.dateStart}" max="${todayStr()}"
+          onchange="setDateRange(this.value, document.getElementById('range-end').value)" >
+        <span class="range-sep">→</span>
+        <input type="date" id="range-end" class="range-date-input" value="${state.dateEnd}" max="${todayStr()}"
+          onchange="setDateRange(document.querySelector('.range-date-input').value, this.value)">
+      </div>
+    </div>
+  `;
+}
 
 // ═══════════════════════════════════════
 // TIMER
@@ -857,36 +955,25 @@ function renderAvocat(user) {
   const timerStart   = getTimerStart();
   const timerRunning = !!timerStart;
 
-  const now    = new Date();
-  const wRange = getWeekRange();
-  const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
-  const range  = state.period === 'week' ? wRange : mRange;
-
-  const entries = filterEntries(allEntries, range.start, range.end, user.id)
+  const entries = filterEntries(allEntries, state.dateStart, state.dateEnd, user.id)
                     .sort((a,b) => b.date.localeCompare(a.date));
 
   const hours = sumH(entries);
   const money = entries.reduce((s, e) =>
     s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * user.rate), 0);
 
-  const periodLabel = state.period === 'week'
-    ? `${fmtDate(wRange.start)} — ${fmtDate(wRange.end)}`
-    : `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const periodLabel = `${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}`;
 
   document.getElementById('main-content').innerHTML = `
-    <div class="controls">
-      <div class="toggle-group">
-        <button class="toggle-btn ${state.period==='week'?'active':''}" onclick="setPeriod('week')">Săptămână</button>
-        <button class="toggle-btn ${state.period==='month'?'active':''}" onclick="setPeriod('month')">Lună</button>
-      </div>
-      <span style="font-size:13px;color:var(--muted)">${periodLabel}</span>
+    <div class="controls" style="flex-direction:column;align-items:flex-start;gap:10px;">
+      ${rangePicker()}
     </div>
 
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-label">Ore facturabile</div>
         <div class="stat-value">${hours.toFixed(1)}</div>
-        <div class="stat-sub">${state.period==='week' ? 'săptămâna curentă' : 'luna curentă'}</div>
+        <div class="stat-sub">în perioada selectată</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Total de plată</div>
@@ -948,7 +1035,7 @@ function renderAvocat(user) {
 
     <div class="table-wrap">
       <div class="table-header">
-        <span class="table-title">Intrări — ${periodLabel}</span>
+        <span class="table-title">Intrări — ${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}</span>
         ${entries.length ? `<span style="font-size:13px;color:var(--muted)">${entries.length} intrări · ${hours.toFixed(1)}h</span>` : ''}
       </div>
       ${entries.length === 0
@@ -1048,39 +1135,27 @@ async function deleteEntry(id) {
 // ═══════════════════════════════════════
 
 function renderAdmin() {
-  const now    = new Date();
-  const wRange = getWeekRange();
-  const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
-  const range  = state.period === 'week' ? wRange : mRange;
-
   const lawyers  = allUsers.filter(u => u.role === 'avocat');
   const userMap  = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
-  const filtered = filterEntries(allEntries, range.start, range.end,
+  const filtered = filterEntries(allEntries, state.dateStart, state.dateEnd,
                      state.filterUser === 'all' ? null : state.filterUser)
                    .sort((a,b) => b.date.localeCompare(a.date));
 
-  const periodLabel = state.period === 'week'
-    ? `${fmtDate(wRange.start)} — ${fmtDate(wRange.end)}`
-    : `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
-
-  const totalAllHours = sumH(filterEntries(allEntries, range.start, range.end, null));
+  const periodLabel = `${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}`;
+  const totalAllHours = sumH(filterEntries(allEntries, state.dateStart, state.dateEnd, null));
 
   document.getElementById('main-content').innerHTML = `
-    <div class="controls">
-      <div class="toggle-group">
-        <button class="toggle-btn ${state.period==='week'?'active':''}" onclick="setPeriod('week')">Săptămână</button>
-        <button class="toggle-btn ${state.period==='month'?'active':''}" onclick="setPeriod('month')">Lună</button>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span style="font-size:13px;color:var(--muted)">${periodLabel}</span>
+    <div class="controls" style="flex-direction:column;align-items:flex-start;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:10px;">
+        ${rangePicker()}
         <button class="btn-primary" onclick="showReportForm()">Generează raport</button>
       </div>
     </div>
 
     <div class="lawyer-grid">
       ${lawyers.map(u => {
-        const uEntries = filterEntries(allEntries, range.start, range.end, u.id);
+        const uEntries = filterEntries(allEntries, state.dateStart, state.dateEnd, u.id);
         const uH = sumH(uEntries);
         const uM = uEntries.reduce((s,e) => s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * u.rate), 0);
         return `
@@ -1115,7 +1190,7 @@ function renderAdmin() {
       <div class="table-header">
         <span class="table-title">
           ${state.filterUser==='all' ? 'Toate intrările' : `Intrările lui ${userMap[state.filterUser]?.name || ''}`}
-          — ${periodLabel}
+          — ${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}
         </span>
         ${filtered.length ? `<span style="font-size:13px;color:var(--muted)">${filtered.length} intrări · ${sumH(filtered).toFixed(1)}h</span>` : ''}
       </div>
@@ -1166,11 +1241,6 @@ async function updateRate(userId, rawRate) {
 // ═══════════════════════════════════════
 
 function showReportForm() {
-  const now    = new Date();
-  const wRange = getWeekRange();
-  const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
-  const range  = state.period === 'week' ? wRange : mRange;
-
   const settings = JSON.parse(localStorage.getItem('pontaj_settings') || '{}');
 
   document.getElementById('modal-title').textContent = 'Detalii Act';
@@ -1219,7 +1289,7 @@ function showReportForm() {
         </div>
         <div class="field" style="flex:1">
           <label>Data contractului</label>
-          <input type="date" id="rf-contract-date" value="${settings.lastContractDate || range.start}">
+          <input type="date" id="rf-contract-date" value="${settings.lastContractDate || state.dateStart}">
         </div>
       </div>
 
@@ -1248,14 +1318,10 @@ function generateAct() {
                      lastClient: clientName };
   localStorage.setItem('pontaj_settings', JSON.stringify(settings));
 
-  const now    = new Date();
-  const wRange = getWeekRange();
-  const mRange = getMonthRange(now.getFullYear(), now.getMonth() + 1);
-  const range  = state.period === 'week' ? wRange : mRange;
-
+  const now = new Date();
   const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
-  const entries = filterEntries(allEntries, range.start, range.end, null)
+  const entries = filterEntries(allEntries, state.dateStart, state.dateEnd, null)
                     .sort((a,b) => a.date.localeCompare(b.date));
 
   const totalHours = sumH(entries);
@@ -1281,7 +1347,7 @@ function generateAct() {
   const firmDisplay   = firm || 'BIROUL ASOCIAT DE AVOCAȚI';
   const coordDisplay  = coordinator || '___________';
   const clientDisplay = clientName || '___________';
-  const periodDisplay = `${fmtDate(range.start)} – ${fmtDate(range.end)}`;
+  const periodDisplay = `${fmtDate(state.dateStart)} – ${fmtDate(state.dateEnd)}`;
 
   document.getElementById('modal-title').textContent = 'Act de predare-primire';
   document.getElementById('modal-actions').innerHTML = `
