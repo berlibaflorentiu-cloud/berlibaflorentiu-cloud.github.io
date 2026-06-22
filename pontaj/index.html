@@ -1085,6 +1085,54 @@ function filterEntries(entries, start, end, userId) {
   );
 }
 
+// Smart client name matching — handles initials, partial names, reversed order
+function _normName(s) {
+  return s.toLowerCase()
+    .replace(/[șş]/g,'s').replace(/[țţ]/g,'t')
+    .replace(/[ăâ]/g,'a').replace(/[îí]/g,'i')
+    .replace(/[^a-z0-9.]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function clientMatches(entryClient, reportName) {
+  if (!reportName) return true;
+  if (!entryClient) return false;
+  const rn = _normName(reportName);
+  const ec = _normName(entryClient);
+  if (!rn) return true;
+  // Fast path: substring match
+  if (ec === rn || ec.includes(rn) || rn.includes(ec)) return true;
+  // Token-level match
+  const rTokens = rn.split(' ').filter(t => t.length >= 2);
+  const eWords  = ec.split(' ').filter(t => t.length >= 1);
+  for (const rt of rTokens) {
+    const isInitial = rt.length === 2 && rt[1] === '.';
+    if (isInitial) {
+      // "m." in report matches any entry word starting with that letter
+      if (eWords.some(ew => ew[0] === rt[0] && ew.length > 1)) return true;
+    } else if (rt.length >= 3) {
+      // Full word in report: exact word match in entry
+      if (eWords.includes(rt)) return true;
+      // Or entry has an initial that matches this word's first letter
+      if (eWords.some(ew => ew === rt[0] + '.')) return true;
+    }
+  }
+  return false;
+}
+
+function updateClientMatchHint() {
+  const input = document.getElementById('rf-client');
+  const hint  = document.getElementById('rf-client-hint');
+  if (!input || !hint) return;
+  const name = input.value.trim();
+  if (!name) { hint.textContent = ''; return; }
+  const count = filterEntries(allEntries, state.dateStart, state.dateEnd, null)
+    .filter(e => clientMatches(e.client, name)).length;
+  hint.textContent = count === 0
+    ? 'Nicio înregistrare potrivită în perioada selectată.'
+    : `${count} înregistrare${count !== 1 ? 'i' : ''} potrivit${count !== 1 ? 'e' : 'ă'} în perioada selectată.`;
+  hint.style.color = count === 0 ? 'var(--red)' : 'var(--green)';
+}
+
 function sumH(arr) { return arr.reduce((s, e) => s + Number(e.hours), 0); }
 
 // ═══════════════════════════════════════
@@ -1889,7 +1937,8 @@ async function showReportForm() {
       <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px">Client</div>
       <div class="field">
         <label>Numele clientului</label>
-        <input type="text" id="rf-client" placeholder="ex. Veronica CURMEI">
+        <input type="text" id="rf-client" placeholder="ex. Veronica CURMEI" oninput="updateClientMatchHint()">
+        <span id="rf-client-hint" style="font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4"></span>
       </div>
       <div class="field">
         <label>Date client (a.n., buletin, IDNP, domiciliu)</label>
@@ -1990,7 +2039,7 @@ async function generateAct() {
 
   const entries = filterEntries(allEntries, state.dateStart, state.dateEnd, null)
                     .filter(e => state.filterUser === 'group' && state.customGroup.length ? state.customGroup.includes(e.user_id) : true)
-                    .filter(e => !clientName || (e.client || '').toLowerCase().includes(clientName.toLowerCase()))
+                    .filter(e => clientMatches(e.client, clientName))
                     .sort((a,b) => a.date.localeCompare(b.date));
 
   const totalHours = sumH(entries);
