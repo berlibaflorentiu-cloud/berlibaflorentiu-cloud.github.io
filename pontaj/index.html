@@ -2057,7 +2057,7 @@ async function generateAct() {
     return (e.fixed_type === 'cheltuiala' && e.fixed_price != null) ? e.fixed_price : 0;
   }
 
-  const totalOnorariu   = entries.reduce((s, e) => s + entryOnorariu(e), 0);
+  const totalOnorariu   = entries.reduce((s, e) => s + (e.fixed_price != null ? entryOnorariu(e) : 0), 0);
   const totalCheltuieli = entries.reduce((s, e) => s + entryCheltuiala(e), 0);
   const grandTotal      = totalOnorariu + totalCheltuieli;
 
@@ -2147,7 +2147,7 @@ async function generateAct() {
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${u?.name || '—'}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${hoursDisplay}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${rateDisplay}</td>
-                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${hon > 0 ? fmtMoney(hon) : '—'}</td>
+                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${e.fixed_price != null && hon > 0 ? fmtMoney(hon) : '—'}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${chel > 0 ? fmtMoney(chel) : '—'}</td>
               </tr>
             `;
