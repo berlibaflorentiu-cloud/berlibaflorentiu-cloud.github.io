@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
     onerror="document.getElementById('loading-screen').style.display='none';document.getElementById('auth-screen').style.display='flex';document.getElementById('auth-screen').innerHTML='<div style=\'text-align:center;padding:60px 24px;font-family:DM Sans,sans-serif;color:#C8A96E\'><div style=\'font-size:48px;letter-spacing:0.2em;font-family:Cormorant Garamond,serif;margin-bottom:24px\'>PONTAJ</div><p style=\'color:#8B949E;font-size:14px\'>Eroare: nu s-a putut încărca librăria Supabase.<br>Verificați conexiunea la internet și reîncărcați pagina.</p><button onclick=\'location.reload()\' style=\'margin-top:20px;padding:10px 24px;background:#C8A96E;border:none;border-radius:7px;color:#0D1117;font-size:14px;font-weight:600;cursor:pointer\'>Reîncarcă</button></div>'">
@@ -1675,8 +1674,8 @@ async function downloadDocx() {
     th { text-align: center; font-size: 9pt; text-transform: uppercase; }
   </style></head><body>${clone.outerHTML}</body></html>`;
 
-  const docxBlob = htmlDocx.asBlob(html, { orientation: 'portrait', margins: { top: 720, right: 900, bottom: 720, left: 900 } });
-  saveAs(docxBlob, `act-predare-primire-${slug}-${date}.docx`);
+  const docBlob = new Blob(['﻿', html], { type: 'application/msword' });
+  saveAs(docBlob, `act-predare-primire-${slug}-${date}.doc`);
 }
 
 function downloadReport() {
@@ -1691,7 +1690,7 @@ function downloadReport() {
     margin: [15, 18, 15, 18],
     filename: `act-predare-primire-${slug}-${date}.pdf`,
     image:    { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
     jsPDF:    { unit: 'mm', format: 'a4', orientation: 'portrait' },
   }).from(el).save();
 }
