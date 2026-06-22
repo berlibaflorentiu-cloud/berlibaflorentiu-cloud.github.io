@@ -2076,6 +2076,7 @@ async function generateAct() {
 
   const totalOnorariu   = entries.reduce((s, e) => s + (e.fixed_price != null ? entryOnorariu(e) : 0), 0);
   const totalCheltuieli = entries.reduce((s, e) => s + entryCheltuiala(e), 0);
+  const totalEur        = entries.reduce((s, e) => e.fixed_price == null ? s + Number(e.hours) * (userMap[e.user_id]?.rate || 0) : s, 0);
   const grandTotal      = totalOnorariu + totalCheltuieli;
 
   // birouExtra is charged per client: 100 MDL for every 4000 MDL spent by that client.
@@ -2180,8 +2181,8 @@ async function generateAct() {
               TOTAL${contractNr ? ` (Contractul nr. ${contractNr})` : ''}:
             </td>
             <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalHours > 0 ? totalHours.toFixed(1) + ' ore' : '—'}</td>
-            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">—</td>
-            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${fmtMoney(totalOnorariu)}</td>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalEur > 0 ? totalEur.toLocaleString('ro-RO', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' EUR' : '—'}</td>
+            <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalOnorariu > 0 ? fmtMoney(totalOnorariu) : '—'}</td>
             <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${totalCheltuieli + birouExtra > 0 ? fmtMoney(totalCheltuieli + birouExtra) : '—'}</td>
           </tr>
         </tbody>
