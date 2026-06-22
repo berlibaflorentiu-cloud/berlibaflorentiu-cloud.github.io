@@ -768,6 +768,7 @@
       grid-area: 1 / 1; /* all panels in same cell — container height = tallest panel, never changes */
       position: relative; z-index: 1;
       display: block; padding: 48px 52px;
+      min-width: 0;
       opacity: 0; visibility: hidden; pointer-events: none;
       transition: opacity .3s ease, visibility .3s ease;
     }
@@ -785,9 +786,10 @@
       justify-content: center; color: var(--white); margin-bottom: 24px;
     }
     .sp-title { font-family: var(--ff-serif); font-size: 36px; font-weight: 600; color: var(--white); line-height: 1.15; letter-spacing: -.01em; margin-bottom: 16px; }
-    .sp-desc { font-size: 14.5px; color: rgba(255,255,255,.55); line-height: 1.8; margin-bottom: 28px; max-width: 520px; }
+    .sp-desc { font-size: 14.5px; color: rgba(255,255,255,.55); line-height: 1.8; margin-bottom: 28px; max-width: 520px; overflow-wrap: break-word; word-break: break-word; }
     .sp-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; }
-    .sp-list li { font-size: 13.5px; color: rgba(255,255,255,.65); display: flex; align-items: flex-start; gap: 9px; line-height: 1.5; }
+    .sp-list li { font-size: 13.5px; color: rgba(255,255,255,.65); display: flex; align-items: flex-start; gap: 9px; line-height: 1.5; overflow-wrap: break-word; word-break: break-word; min-width: 0; }
+    .sp-list li > span, .sp-list li > * { min-width: 0; }
     .sp-list li::before { content:''; width:6px; height:6px; border-radius:50%; background: rgba(255,255,255,.5); flex-shrink:0; margin-top:6px; }
     .sp-cta { margin-top: 36px; }
 
@@ -1321,7 +1323,9 @@
       .hero-photo { animation: none !important; transform: none !important; background-position: center 8%; }
 
       .srv-tabs { grid-template-columns: 1fr; position: relative; }
-      .srv-tab-list { border-right: none; border-bottom: 1px solid rgba(255,255,255,.07); flex-direction: row; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+      /* min-width:0 prevents the 1fr grid track from expanding to fit flex children */
+      .srv-tab-list { border-right: none; border-bottom: 1px solid rgba(255,255,255,.07); flex-direction: row; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; min-width: 0; width: 100%; }
+      .srv-panels { min-width: 0; }
       .srv-tab { flex-shrink: 0; border-left: none; border-bottom: 3px solid transparent; padding: 14px 18px; scroll-snap-align: start; }
       .srv-tab.active { border-left-color: transparent; border-bottom-color: var(--white); }
       .srv-tab + .srv-tab { border-top: none; border-left: 1px solid rgba(255,255,255,.05); }
@@ -1361,6 +1365,17 @@
       .team-ext { grid-template-columns:1fr; }
       .tslide { flex:0 0 78%; max-width:78%; }
       .tcard-wide { grid-column:span 2; }
+      /* Resource cards: single-column horizontal scroll on very small screens */
+      .links-g { grid-auto-columns: clamp(260px, 80vw, 320px); }
+      /* Service panel: break long slash-separated words */
+      .sp-list li, .sp-desc { overflow-wrap: break-word; word-break: break-word; }
+      /* Language switcher: collapse to single row to reduce navbar height */
+      .lang-sw { flex-direction: row; gap: 3px; }
+      .lang-row { gap: 3px; }
+      .lang-btn { padding: 4px 6px; font-size: 10px; letter-spacing: .04em; }
+      /* Contact lead text: avoid floating button overlap on right side */
+      #contact .sec-intro, #contact .lead, #contact p { padding-right: 0; }
+      #contact > .wrap > *:first-child p { max-width: calc(100% - 60px); }
     }
 
     /* Spinner */
