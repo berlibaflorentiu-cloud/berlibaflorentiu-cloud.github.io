@@ -477,6 +477,10 @@
     .lsc-name { font-weight: 600; font-size: 15px; margin-bottom: 12px; }
     .lsc-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 5px; }
     .lsc-row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
+    .group-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .group-chip { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--surface2); color: var(--muted); cursor: pointer; transition: all 0.15s; border: 1px solid transparent; user-select: none; }
+    .group-chip:hover { border-color: var(--gold); color: var(--gold); }
+    .group-chip.on { background: rgba(200,169,110,0.15); color: var(--gold); border-color: var(--gold); }
 
     /* rate edit inside card */
     .rate-input {
@@ -708,7 +712,7 @@ function initDateRange() {
   };
 }
 const _dr = initDateRange();
-const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin' };
+const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin', customGroup: [] };
 
 const PRESETS = [
   { label: 'Întrevederea la Penitenciar',              price: 1500, type: 'onorariu' },
@@ -960,6 +964,11 @@ function render() {
 
 function setDateRange(start, end) { state.dateStart = start; state.dateEnd = end; render(); }
 function setFilterUser(id) { state.filterUser = id; render(); }
+function toggleGroupMember(id) {
+  const i = state.customGroup.indexOf(id);
+  if (i === -1) state.customGroup.push(id); else state.customGroup.splice(i, 1);
+  render();
+}
 
 function quickRange(preset) {
   const now = new Date();
@@ -1246,12 +1255,21 @@ function renderAdmin() {
   const lawyers  = allUsers;
   const userMap  = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
-  const filtered = filterEntries(allEntries, state.dateStart, state.dateEnd,
-                     state.filterUser === 'all' ? null : state.filterUser)
-                   .sort((a,b) => b.date.localeCompare(a.date));
+  const periodEntries = filterEntries(allEntries, state.dateStart, state.dateEnd, null);
+  const filtered = (
+    state.filterUser === 'all'  ? periodEntries :
+    state.filterUser === 'group' ? periodEntries.filter(e => state.customGroup.includes(e.user_id)) :
+    periodEntries.filter(e => e.user_id === state.filterUser)
+  ).sort((a,b) => b.date.localeCompare(a.date));
 
   const periodLabel = `${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}`;
-  const totalAllHours = sumH(filterEntries(allEntries, state.dateStart, state.dateEnd, null));
+  const totalAllHours = sumH(periodEntries);
+  const groupEntries  = periodEntries.filter(e => state.customGroup.includes(e.user_id));
+  const groupHours    = sumH(groupEntries);
+  const groupMoney    = groupEntries.reduce((s,e) => {
+    const u = allUsers.find(u => u.id === e.user_id);
+    return s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * (u?.rate || 0));
+  }, 0);
 
   document.getElementById('main-content').innerHTML = `
     <div class="controls" style="flex-direction:column;align-items:flex-start;gap:10px;">
@@ -1287,6 +1305,17 @@ function renderAdmin() {
         <div class="lsc-name" style="color:var(--muted)">Toți avocații</div>
         <div class="lsc-row"><span>Total ore</span><span>${totalAllHours.toFixed(1)} h</span></div>
       </div>
+      <div class="lsc dashed ${state.filterUser==='group'?'active':''}" onclick="setFilterUser('group')" style="min-height:100px">
+        <div class="lsc-name" style="color:var(--muted);margin-bottom:10px">Grup personalizat</div>
+        <div class="group-chips">
+          ${lawyers.map(u => `<span class="group-chip ${state.customGroup.includes(u.id)?'on':''}"
+            onclick="event.stopPropagation();toggleGroupMember('${u.id}')">${u.name.split(' ')[0]}</span>`).join('')}
+        </div>
+        ${state.customGroup.length > 0 ? `
+          <div class="lsc-row"><span>Total ore</span><span>${groupHours.toFixed(1)} h</span></div>
+          <div class="lsc-row"><span>Total</span><span>${fmtMoney(groupMoney)}</span></div>
+        ` : `<div style="font-size:12px;color:var(--muted);margin-top:4px">Selectează avocați din grup</div>`}
+      </div>
     </div>
 
     <div class="invite-box">
@@ -1297,7 +1326,7 @@ function renderAdmin() {
     <div class="table-wrap">
       <div class="table-header">
         <span class="table-title">
-          ${state.filterUser==='all' ? 'Toate intrările' : `Intrările lui ${userMap[state.filterUser]?.name || ''}`}
+          ${state.filterUser==='all' ? 'Toate intrările' : state.filterUser==='group' ? `Grup: ${state.customGroup.map(id=>userMap[id]?.name?.split(' ')[0]).filter(Boolean).join(', ') || '—'}` : `Intrările lui ${userMap[state.filterUser]?.name || ''}`}
           — ${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}
         </span>
         ${filtered.length ? `<span style="font-size:13px;color:var(--muted)">${filtered.length} intrări · ${sumH(filtered).toFixed(1)}h</span>` : ''}
@@ -1508,6 +1537,7 @@ async function generateAct() {
   const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
   const entries = filterEntries(allEntries, state.dateStart, state.dateEnd, null)
+                    .filter(e => state.filterUser === 'group' && state.customGroup.length ? state.customGroup.includes(e.user_id) : true)
                     .filter(e => !clientName || (e.client || '').toLowerCase().includes(clientName.toLowerCase()))
                     .sort((a,b) => a.date.localeCompare(b.date));
 
