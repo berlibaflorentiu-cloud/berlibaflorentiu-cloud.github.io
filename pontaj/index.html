@@ -2158,6 +2158,12 @@ async function generateAct() {
             const chel = entryCheltuiala(e);
             const hoursDisplay = e.fixed_price != null ? '—' : `${Number(e.hours).toFixed(1)} ore`;
             const rateDisplay  = e.fixed_price != null ? '—' : `${u?.rate ?? '—'} EUR`;
+            const eurEarned    = e.fixed_price == null ? Number(e.hours) * (u?.rate || 0) : 0;
+            const sumaDisplay  = e.fixed_price != null && hon > 0
+              ? fmtMoney(hon)
+              : e.fixed_price == null && eurEarned > 0
+                ? eurEarned.toLocaleString('ro-RO', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' EUR'
+                : '—';
             return `
               <tr>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${i + 1}.</td>
@@ -2165,7 +2171,7 @@ async function generateAct() {
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${u?.name || '—'}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${hoursDisplay}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${rateDisplay}</td>
-                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${e.fixed_price != null && hon > 0 ? fmtMoney(hon) : '—'}</td>
+                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${sumaDisplay}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${chel > 0 ? fmtMoney(chel) : '—'}</td>
               </tr>
             `;
