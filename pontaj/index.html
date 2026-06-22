@@ -693,9 +693,10 @@ try {
 // GLOBAL STATE
 // ═══════════════════════════════════════
 
-let currentUser = null;
-let allUsers    = [];
-let allEntries  = [];
+let currentUser   = null;
+let allUsers      = [];
+let allEntries    = [];
+let actTemplates  = [];
 
 function initDateRange() {
   const now = new Date();
@@ -1346,16 +1347,42 @@ async function updateRate(userId, rawRate) {
 // REPORT — ACT DE PREDARE-PRIMIRE
 // ═══════════════════════════════════════
 
-function showReportForm() {
+function templateDropdownHTML() {
+  if (!actTemplates.length) return `<span style="font-size:13px;color:var(--muted)">Niciun template salvat</span>`;
+  return `<select id="tpl-select" style="flex:1;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;font-family:inherit">
+    <option value="">— Alege template —</option>
+    ${actTemplates.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+  </select>`;
+}
+
+function renderTemplateBar() {
+  document.getElementById('tpl-bar').innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      ${templateDropdownHTML()}
+      ${actTemplates.length ? `<button class="btn-ghost" onclick="applyActTemplate()" style="white-space:nowrap">Încarcă</button>
+      <button class="btn-ghost" onclick="deleteActTemplate()" style="white-space:nowrap;color:var(--red)">Șterge</button>` : ''}
+    </div>
+    <button class="btn-ghost" onclick="saveActTemplate()" style="white-space:nowrap;color:var(--gold);border-color:var(--gold)">+ Salvează template</button>
+  `;
+}
+
+async function showReportForm() {
   const settings = JSON.parse(localStorage.getItem('pontaj_settings') || '{}');
 
+  // Load templates
+  const { data } = await db.from('act_templates').select('*').eq('user_id', currentUser.id).order('name');
+  actTemplates = data || [];
+
   document.getElementById('modal-title').textContent = 'Detalii Act';
-  document.getElementById('modal-actions').innerHTML = `
-    <button class="btn-ghost" onclick="closeModal()">✕</button>
-  `;
+  document.getElementById('modal-actions').innerHTML = `<button class="btn-ghost" onclick="closeModal()">✕</button>`;
   document.getElementById('modal-body').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0">
-      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Cabinet</div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <div id="tpl-bar" style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap"></div>
+      </div>
+
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Cabinet</div>
       <div class="field">
         <label>Denumirea cabinetului</label>
         <input type="text" id="rf-firm" value="${settings.firm || ''}" placeholder='ex. BIROUL ASOCIAT DE AVOCAȚI „BERLIBA ȘI PARTENERII"'>
@@ -1377,7 +1404,7 @@ function showReportForm() {
         <input type="text" id="rf-bank" value="${settings.bank || ''}" placeholder='ex. B.C. „Moldova-Agroindbank" S.A.'>
       </div>
 
-      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:8px;margin-bottom:4px">Client</div>
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px">Client</div>
       <div class="field">
         <label>Numele clientului</label>
         <input type="text" id="rf-client" placeholder="ex. Veronica CURMEI">
@@ -1387,7 +1414,7 @@ function showReportForm() {
         <input type="text" id="rf-client-details" placeholder="ex. a.n. 01.01.1980, BI B01234567, IDNP 0123456789012, mun. Chișinău">
       </div>
 
-      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:8px;margin-bottom:4px">Contract</div>
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px">Contract</div>
       <div style="display:flex;gap:12px">
         <div class="field" style="flex:1">
           <label>Nr. contract</label>
@@ -1406,6 +1433,55 @@ function showReportForm() {
     </div>
   `;
   document.getElementById('modal-overlay').style.display = 'flex';
+  renderTemplateBar();
+}
+
+function currentFormData() {
+  return {
+    firm:        document.getElementById('rf-firm').value.trim(),
+    coordinator: document.getElementById('rf-coordinator').value.trim(),
+    idno:        document.getElementById('rf-idno').value.trim(),
+    ibanMdl:     document.getElementById('rf-iban-mdl').value.trim(),
+    bank:        document.getElementById('rf-bank').value.trim(),
+  };
+}
+
+function applyActTemplate() {
+  const sel = document.getElementById('tpl-select');
+  if (!sel?.value) return;
+  const tpl = actTemplates.find(t => t.id === sel.value);
+  if (!tpl) return;
+  const d = tpl.data;
+  document.getElementById('rf-firm').value        = d.firm        || '';
+  document.getElementById('rf-coordinator').value = d.coordinator || '';
+  document.getElementById('rf-idno').value        = d.idno        || '';
+  document.getElementById('rf-iban-mdl').value    = d.ibanMdl     || '';
+  document.getElementById('rf-bank').value        = d.bank        || '';
+}
+
+async function saveActTemplate() {
+  const name = prompt('Nume template:');
+  if (!name?.trim()) return;
+  const { data, error } = await db.from('act_templates').insert({
+    user_id: currentUser.id,
+    name: name.trim(),
+    data: currentFormData(),
+  }).select().single();
+  if (error) { alert(error.message); return; }
+  actTemplates.push(data);
+  actTemplates.sort((a,b) => a.name.localeCompare(b.name));
+  renderTemplateBar();
+}
+
+async function deleteActTemplate() {
+  const sel = document.getElementById('tpl-select');
+  if (!sel?.value) return;
+  const tpl = actTemplates.find(t => t.id === sel.value);
+  if (!tpl || !confirm(`Ștergi template-ul "${tpl.name}"?`)) return;
+  const { error } = await db.from('act_templates').delete().eq('id', tpl.id);
+  if (error) { alert(error.message); return; }
+  actTemplates = actTemplates.filter(t => t.id !== tpl.id);
+  renderTemplateBar();
 }
 
 function generateAct() {
