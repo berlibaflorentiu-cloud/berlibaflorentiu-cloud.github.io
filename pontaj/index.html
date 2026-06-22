@@ -542,8 +542,8 @@
       background: var(--surface);
       z-index: 1;
     }
-    .modal-head-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--gold); }
-    .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .modal-head-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+    .modal-actions { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
     .report-body { padding: 32px 36px; position: relative; }
 
     /* ── PRINT ── */
@@ -1547,8 +1547,8 @@ async function generateAct() {
   document.getElementById('modal-actions').innerHTML = `
     <button class="btn-ghost" onclick="showReportForm()">← Înapoi</button>
     <button class="btn-ghost" onclick="window.print()">Tipărește</button>
-    <button class="btn-ghost" onclick="downloadDocx()" style="font-size:13px">↓ Descarcă DOCX</button>
-    <button class="btn-primary" onclick="downloadReport()" style="font-size:13px">↓ Descarcă PDF</button>
+    <button class="btn-primary" onclick="downloadDocx()" style="font-size:13px">↓ DOCX</button>
+    <button class="btn-primary" onclick="downloadReport()" style="font-size:13px">↓ PDF</button>
     <button class="btn-ghost" onclick="closeModal()">✕</button>
   `;
   document.getElementById('modal-body').innerHTML = `
