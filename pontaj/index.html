@@ -14,6 +14,8 @@
   </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { overflow-x: hidden; }
+    button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
     :root {
       --bg: #0D1117;
@@ -207,6 +209,8 @@
       transition: color 0.15s, border-color 0.15s;
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+    .btn-mode, .btn-logout { display: inline-flex; align-items: center; gap: 7px; }
+    .btn-mode svg, .btn-logout svg { flex-shrink: 0; }
 
     .btn-primary {
       background: var(--gold);
@@ -583,11 +587,81 @@
     /* ── RESPONSIVE ── */
     @media (max-width: 720px) {
       main { padding: 20px 16px; }
-      header { padding: 0 16px; }
+
+      /* ── HEADER: compact so nothing clips ── */
+      header { padding: 0 16px; gap: 8px; }
+      .header-right { gap: 8px; }
+      .header-user { display: none; }                 /* name is secondary on mobile */
+      .btn-logout .logout-text { display: none; }      /* icon-only logout */
+      .btn-logout { padding: 8px 11px; }
+      .btn-mode { padding: 7px 12px; }
+
+      /* ── iOS: 16px inputs prevent auto-zoom on focus ── */
+      .auth-input,
+      .field input, .field select,
+      .range-date-input { font-size: 16px; }
+
+      /* ── FORM grid ── */
       .form-grid { grid-template-columns: 1fr 1fr; }
       .form-grid > *:nth-child(3),
       .form-grid > *:nth-child(4),
       .form-grid > *:nth-child(5) { grid-column: span 2; }
+      .form-grid .btn-primary { width: 100%; min-height: 46px; }
+
+      /* ── STATS: compact, balanced cards (label+sub left, value right) ── */
+      .stats-row { gap: 10px; }
+      .stat-card {
+        flex: 1 1 100%;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        padding: 16px 18px;
+      }
+      .stat-label { grid-column: 1; margin-bottom: 2px; }
+      .stat-value { grid-column: 2; grid-row: 1 / 3; font-size: 30px; }
+      .stat-sub { grid-column: 1; margin-top: 0; }
+
+      /* ── TIMER: tighten vertical space ── */
+      .timer-bar { padding: 16px 18px; }
+      .timer-display { font-size: 30px; }
+      .btn-timer-start, .btn-timer-stop { flex: 1; justify-content: center; min-height: 46px; }
+
+      /* ── ENTRIES TABLE → stacked cards ── */
+      .entries-table thead { display: none; }
+      .entries-table, .entries-table tbody, .entries-table tr, .entries-table td { display: block; width: 100%; }
+      .table-wrap { overflow: visible; }
+      .entries-table tr {
+        position: relative;
+        padding: 14px 16px 14px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .entries-table tr:last-child { border-bottom: none; }
+      .entries-table tr:hover td { background: none; }
+      .entries-table td { border: none; padding: 0; font-size: 14px; }
+      .entries-table .td-avocat { display: block; color: var(--gold); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; padding-right: 32px; }
+      .entries-table .td-desc { font-weight: 500; color: var(--text); padding-right: 32px; margin-bottom: 6px; line-height: 1.4; }
+      .entries-table .td-date,
+      .entries-table .td-client { display: inline; color: var(--muted); font-size: 13px; }
+      .entries-table .td-date::after { content: " · "; }
+      .entries-table .td-hours { margin-top: 8px; font-size: 15px; }
+      .entries-table .td-del { position: absolute; top: 4px; right: 2px; width: auto; }
+      .entries-table .btn-delete { padding: 11px 13px; font-size: 16px; }
+
+      /* ── TOUCH TARGETS ── */
+      .preset-chip { padding: 8px 14px; font-size: 13px; }
+      .btn-ghost { padding: 9px 14px; }
+      .toggle-btn { padding: 9px 16px; }
+
+      /* ── ADMIN lawyer cards ── */
+      .lawyer-grid { grid-template-columns: 1fr; }
+
+      /* ── MODAL: more room, scrollable actions ── */
+      .modal-overlay { padding: 12px; align-items: flex-end; }
+      .modal { max-height: 94vh; border-radius: 14px 14px 0 0; }
+      .modal-head { padding: 16px 18px; }
+      .report-body { padding: 20px 18px; }
+      .modal-actions { gap: 6px; }
+      .modal-actions .btn-ghost, .modal-actions .btn-primary { padding: 8px 12px; }
     }
   </style>
 </head>
@@ -670,7 +744,10 @@
       <span class="header-user" id="headerUser"></span>
       <span id="header-mode-toggle"></span>
       <span id="header-requests"></span>
-      <button class="btn-ghost" onclick="logout()">Deconectare</button>
+      <button class="btn-ghost btn-logout" onclick="logout()" aria-label="Deconectare" title="Deconectare">
+        <svg class="ico-logout" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="logout-text">Deconectare</span>
+      </button>
     </div>
   </header>
   <main id="main-content"></main>
@@ -1072,7 +1149,10 @@ function updateModeToggle() {
   const el = document.getElementById('header-mode-toggle');
   if (!el || currentUser?.role !== 'admin') return;
   const isAdmin = state.viewMode === 'admin';
-  el.innerHTML = `<button class="btn-ghost" onclick="toggleViewMode()" style="border-color:var(--gold);color:var(--gold)">${isAdmin ? '👤 Pontajul meu' : '⚙ Admin'}</button>`;
+  const icon = isAdmin
+    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+  el.innerHTML = `<button class="btn-ghost btn-mode" onclick="toggleViewMode()" style="border-color:var(--gold);color:var(--gold)">${icon}<span class="mode-text">${isAdmin ? 'Pontajul meu' : 'Admin'}</span></button>`;
 }
 
 function render() {
@@ -1280,7 +1360,7 @@ function renderAvocat(user) {
       </div>
       ${entries.length === 0
         ? `<div class="empty-state"><div class="empty-icon">⏱</div><p>Nicio intrare pentru această perioadă.<br>Adaugă prima activitate din formularul de mai sus.</p></div>`
-        : `<table>
+        : `<table class="entries-table">
             <thead><tr>
               <th style="width:100px">Data</th>
               <th>Client / Dosar</th>
@@ -1291,11 +1371,11 @@ function renderAvocat(user) {
             <tbody>
               ${entries.map(e => `
                 <tr>
-                  <td class="td-date">${fmtDate(e.date)}</td>
-                  <td style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
-                  <td>${e.description}</td>
-                  <td class="td-hours">${e.fixed_price != null ? fmtMoney(e.fixed_price) : Number(e.hours).toFixed(1) + 'h'}</td>
-                  <td><button class="btn-delete" onclick="deleteEntry('${e.id}')" title="Șterge">✕</button></td>
+                  <td class="td-date" data-label="Data">${fmtDate(e.date)}</td>
+                  <td class="td-client" data-label="Client / Dosar" style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
+                  <td class="td-desc" data-label="Descriere">${e.description}</td>
+                  <td class="td-hours" data-label="Ore / Valoare">${e.fixed_price != null ? fmtMoney(e.fixed_price) : Number(e.hours).toFixed(1) + 'h'}</td>
+                  <td class="td-del"><button class="btn-delete" onclick="deleteEntry('${e.id}')" aria-label="Șterge intrarea" title="Șterge">✕</button></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -1546,7 +1626,7 @@ function renderAdmin() {
       </div>
       ${filtered.length === 0
         ? `<div class="empty-state"><div class="empty-icon">📋</div><p>Nicio intrare pentru această perioadă.</p></div>`
-        : `<table>
+        : `<table class="entries-table">
             <thead><tr>
               <th style="width:100px">Data</th>
               <th>Avocat</th>
@@ -1561,12 +1641,12 @@ function renderAdmin() {
                 const val = e.fixed_price != null ? fmtMoney(e.fixed_price) : Number(e.hours).toFixed(1) + 'h';
                 return `
                   <tr>
-                    <td class="td-date">${fmtDate(e.date)}</td>
-                    <td style="font-weight:500;font-size:13px">${u?.name || '—'}</td>
-                    <td style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
-                    <td style="font-size:14px">${e.description}</td>
-                    <td class="td-hours">${val}</td>
-                    <td><button class="btn-delete" onclick="deleteEntry('${e.id}')" title="Șterge">✕</button></td>
+                    <td class="td-date" data-label="Data">${fmtDate(e.date)}</td>
+                    <td class="td-avocat" data-label="Avocat" style="font-weight:500;font-size:13px">${u?.name || '—'}</td>
+                    <td class="td-client" data-label="Client / Dosar" style="color:var(--muted);font-size:13px">${e.client || '—'}</td>
+                    <td class="td-desc" data-label="Descriere" style="font-size:14px">${e.description}</td>
+                    <td class="td-hours" data-label="Ore / Valoare">${val}</td>
+                    <td class="td-del"><button class="btn-delete" onclick="deleteEntry('${e.id}')" aria-label="Șterge intrarea" title="Șterge">✕</button></td>
                   </tr>
                 `;
               }).join('')}
