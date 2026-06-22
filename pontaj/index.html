@@ -1504,6 +1504,7 @@ function generateAct() {
   const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
 
   const entries = filterEntries(allEntries, state.dateStart, state.dateEnd, null)
+                    .filter(e => !clientName || (e.client || '').toLowerCase().includes(clientName.toLowerCase()))
                     .sort((a,b) => a.date.localeCompare(b.date));
 
   const totalHours = sumH(entries);
