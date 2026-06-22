@@ -1163,6 +1163,23 @@ function fmtMoney(n) {
   return n.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' MDL';
 }
 
+// Split earnings into EUR (hourly) and MDL (fixed-price), then format.
+// getRateForEntry(e) → the EUR/h rate for that entry's lawyer.
+function splitEarnings(entries, getRateForEntry) {
+  let eur = 0, mdl = 0;
+  entries.forEach(e => {
+    if (e.fixed_price != null) mdl += e.fixed_price;
+    else eur += Number(e.hours) * (getRateForEntry(e) || 0);
+  });
+  return { eur, mdl };
+}
+function fmtEarnings({ eur, mdl }) {
+  const parts = [];
+  if (eur > 0) parts.push(eur.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' EUR');
+  if (mdl > 0) parts.push(fmtMoney(mdl));
+  return parts.join(' + ') || '—';
+}
+
 const MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
                 'Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
 
@@ -1393,8 +1410,7 @@ function renderAvocat(user) {
                     .sort((a,b) => b.date.localeCompare(a.date));
 
   const hours = sumH(entries);
-  const money = entries.reduce((s, e) =>
-    s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * user.rate), 0);
+  const money = splitEarnings(entries, () => user.rate);
 
   const periodLabel = `${fmtDate(state.dateStart)} — ${fmtDate(state.dateEnd)}`;
 
@@ -1410,8 +1426,8 @@ function renderAvocat(user) {
         <div class="stat-sub">în perioada selectată</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Total de plată</div>
-        <div class="stat-value" style="font-size:28px">${fmtMoney(money)}</div>
+        <div class="stat-label">Total câștigat</div>
+        <div class="stat-value" style="font-size:${money.eur > 0 && money.mdl > 0 ? '18px' : '28px'}">${fmtEarnings(money)}</div>
         <div class="stat-sub">în perioada selectată</div>
       </div>
       <div class="stat-card">
@@ -1758,10 +1774,7 @@ function renderAdmin() {
   const totalAllHours = sumH(periodEntries);
   const groupEntries  = periodEntries.filter(e => state.customGroup.includes(e.user_id));
   const groupHours    = sumH(groupEntries);
-  const groupMoney    = groupEntries.reduce((s,e) => {
-    const u = allUsers.find(u => u.id === e.user_id);
-    return s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * (u?.rate || 0));
-  }, 0);
+  const groupMoney    = splitEarnings(groupEntries, e => allUsers.find(u => u.id === e.user_id)?.rate);
 
   document.getElementById('main-content').innerHTML = `
     <div class="controls" style="flex-direction:column;align-items:flex-start;gap:10px;">
@@ -1775,7 +1788,7 @@ function renderAdmin() {
       ${lawyers.map(u => {
         const uEntries = filterEntries(allEntries, state.dateStart, state.dateEnd, u.id);
         const uH = sumH(uEntries);
-        const uM = uEntries.reduce((s,e) => s + (e.fixed_price != null ? e.fixed_price : Number(e.hours) * u.rate), 0);
+        const uM = splitEarnings(uEntries, () => u.rate);
         return `
           <div class="lsc ${state.filterUser===u.id?'active':''}" onclick="setFilterUser('${u.id}')" style="position:relative">
             <button onclick="event.stopPropagation();confirmDeleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}',${uEntries.length})"
@@ -1785,7 +1798,7 @@ function renderAdmin() {
               onmouseout="this.style.color='var(--muted)';this.style.background='none'">✕</button>
             <div class="lsc-name" style="padding-right:20px">${u.name}</div>
             <div class="lsc-row"><span>Ore</span><span>${uH.toFixed(1)} h</span></div>
-            <div class="lsc-row"><span>Total</span><span>${fmtMoney(uM)}</span></div>
+            <div class="lsc-row"><span>Total</span><span>${fmtEarnings(uM)}</span></div>
             <div class="lsc-row">
               <span>Tarif</span>
               <span>
@@ -1810,7 +1823,7 @@ function renderAdmin() {
         </div>
         ${state.customGroup.length > 0 ? `
           <div class="lsc-row"><span>Total ore</span><span>${groupHours.toFixed(1)} h</span></div>
-          <div class="lsc-row"><span>Total</span><span>${fmtMoney(groupMoney)}</span></div>
+          <div class="lsc-row"><span>Total</span><span>${fmtEarnings(groupMoney)}</span></div>
         ` : `<div style="font-size:12px;color:var(--muted);margin-top:4px">Selectează avocați din grup</div>`}
       </div>
     </div>
