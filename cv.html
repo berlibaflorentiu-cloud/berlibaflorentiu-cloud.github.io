@@ -121,6 +121,7 @@
     }
     .cv-modal-close:hover { background: rgba(255,255,255,.16); }
     .cv-modal iframe { flex: 1; width: 100%; border: 0; }
+    .cv-modal-img { flex: 1; width: 100%; object-fit: contain; background: #111; }
 
     @media (max-width: 720px) {
       .cv-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -195,7 +196,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <iframe id="cv-modal-frame" title="Curriculum Vitae" allowfullscreen></iframe>
+      <div id="cv-modal-content" style="flex:1;display:flex;flex-direction:column;overflow:auto;"></div>
     </div>
   </div>
 
@@ -222,7 +223,7 @@
           "În calitate de avocat asociat cu Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener, îmi valorific experiența instituțională și pregătirea științifică în sprijinul cauzelor în care sunt implicat. Mă ghidez după o abordare calmă, bine fundamentată și orientată spre identificarea celor mai potrivite soluții juridice pentru persoanele asistate."
         ]
       },
-      "vasile-contescu":  { name: "Vasile CONȚESCU", type: "asociat", role: "avocat-stagiar asociat", img: "Contescu.jpg",
+      "vasile-contescu":  { name: "Vasile CONȚESCU", type: "asociat", role: "avocat-stagiar asociat", img: "Contescu.jpg", cvFile: "CVContescu.pdf",
         bio: [
           "Parcursul meu profesional de peste 20 de ani în instituțiile de stat mi-a format o disciplină riguroasă, respect față de proceduri și o înțelegere atentă a responsabilității pe care o implică lucrul cu oamenii și cu problemele lor juridice.",
           "În prezent, în calitate de avocat stagiar asociat cu Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener, îmi construiesc activitatea avocațială pe baza experienței acumulate, urmărind să abordez fiecare cauză cu seriozitate, echilibru și atenție la detaliile care pot influența soluția juridică.",
@@ -302,7 +303,7 @@
           "În colaborarea cu Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener, contribui printr-o perspectivă formată la intersecția dintre experiența instituțională, cercetarea juridică și practica avocațială. Abordarea mea se bazează pe prudență, analiză temeinică și identificarea unor soluții juridice clare, adaptate particularităților fiecărei cauze."
         ]
       },
-      "ana-maria-soitu":  { name: "Ana-Maria ȘOITU", type: "colaborare", role: "avocat-stagiar prin colaborare · CA „Elena BUGUȚA”", img: "Soitu.jpg",
+      “ana-maria-soitu”:  { name: “Ana-Maria ȘOITU”, type: “colaborare”, role: “avocat-stagiar prin colaborare · CA „Elena BUGUȚA””, img: “Soitu.jpg”, cvFile: “CVSoitu.jpg”,
         bio: [
           "A fi avocat stagiar înseamnă pentru mine asumarea unui parcurs profesional construit pas cu pas, prin muncă, observație și implicare în activitatea juridică de zi cu zi. Această etapă îmi oferă posibilitatea de a transforma pregătirea teoretică într-o practică responsabilă, orientată spre înțelegerea concretă a nevoilor persoanei asistate.",
           "În colaborarea cu Bu<span style=\"color:#e12d39;font-style:italic;font-weight:700;font-size:1.15em\">N</span>Partener, am ocazia să particip la analiza cauzelor, la pregătirea actelor juridice și la dezvoltarea unei conduite profesionale bazate pe corectitudine, atenție și respect față de profesie. Privesc această colaborare ca pe un mediu în care pot crește profesional, contribuind în același timp la activitatea echipei prin seriozitate, energie și deschidere spre învățare.",
@@ -365,7 +366,11 @@
           btn.className = "cv-doc-btn";
           btn.innerHTML = DOC_ICON + labelHtml;
           btn.addEventListener("click", function () {
-            document.getElementById("cv-modal-frame").src = file;
+            var container = document.getElementById("cv-modal-content");
+            var isImage = /\.(jpe?g|png|gif|webp)$/i.test(file);
+            container.innerHTML = isImage
+              ? '<img src="' + file + '" alt="CV ' + p.name + '" class="cv-modal-img">'
+              : '<iframe src="' + file + '" title="Curriculum Vitae" allowfullscreen style="flex:1;width:100%;border:0;"></iframe>';
             document.getElementById("cv-modal-title").textContent = "Curriculum Vitae — " + p.name;
             document.getElementById("cv-modal-bg").classList.add("open");
           });
@@ -432,7 +437,7 @@
       const closeBtn = document.getElementById("cv-modal-close");
       function closeModal() {
         bg.classList.remove("open");
-        document.getElementById("cv-modal-frame").src = "";
+        document.getElementById("cv-modal-content").innerHTML = "";
       }
       closeBtn.addEventListener("click", closeModal);
       bg.addEventListener("click", function (e) { if (e.target === bg) closeModal(); });
@@ -469,6 +474,6 @@
     })();
   </script>
 
-<script src="i18n.js?v=66270367"></script>
+<script src="i18n.js?v=6f86c66e"></script>
 </body>
 </html>
