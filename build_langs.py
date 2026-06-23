@@ -348,8 +348,45 @@ def inject_page_lang(htmltext, lang):
     return re.sub(r'(<script src="/i18n\.js(?:\?[^"]*)?"></script>)',
                   tag + r'\1', htmltext, count=1)
 
+# ── smart-quote sanitizer ─────────────────────────────────────────────────────
+def fix_smart_quotes(path):
+    """Replace smart-quote JS delimiters with ASCII quotes in <script> blocks.
+
+    The Edit tool occasionally writes U+201C/U+201D as string delimiters instead
+    of ASCII U+0022, breaking all JS on the page.  Rules:
+      · U+201C (" left double quotation mark) → ASCII " always — it never appears
+        as valid content in these inline scripts (Romanian uses U+201E „ for that).
+      · U+201D (" right double quotation mark) → ASCII " only on lines that have
+        zero ASCII double-quotes (i.e. the whole line is fully smart-quoted).
+        On lines that already have ASCII delimiters, U+201D is a content quote
+        closing a „…" pair and must be preserved.
+    """
+    content = open(path, encoding='utf-8').read()
+
+    def fix_script_block(m):
+        lines = m.group(0).split('\n')
+        for i, line in enumerate(lines):
+            if '“' not in line and '”' not in line:
+                continue
+            ascii_q = line.count('"')
+            line = line.replace('“', '"')          # always fix U+201C
+            if ascii_q == 0:
+                line = line.replace('”', '"')      # fully broken line
+            lines[i] = line
+        return '\n'.join(lines)
+
+    fixed = re.sub(r'<script\b[^>]*>.*?</script>', fix_script_block,
+                   content, flags=re.DOTALL)
+    if fixed != content:
+        open(path, 'w', encoding='utf-8').write(fixed)
+        print('  [auto-fixed] smart-quote JS delimiters in %s' % os.path.basename(path))
+
 # ── main ──────────────────────────────────────────────────────────────────────
 def main():
+    # Fix any smart-quote JS delimiters introduced by editor tools before anything else
+    for page in PAGES:
+        fix_smart_quotes(os.path.join(ROOT, page))
+
     T = extract_translations()
     ro = T["ro"]
     # content hash of i18n.js → cache-busting version so browsers never run a stale copy
