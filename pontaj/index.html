@@ -1289,7 +1289,9 @@ function clientMatches(entryClient, reportName) {
 // falling back to name-matching only when either field is absent.
 function receiptBelongsToClient(r, c) {
   if (c.notes && r.contract_nr) {
-    return r.contract_nr.trim().toLowerCase() === c.notes.trim().toLowerCase();
+    const cn = c.notes.trim().toLowerCase();
+    const rn = r.contract_nr.trim().toLowerCase();
+    return cn === rn || cn.includes(rn) || rn.includes(cn);
   }
   return clientMatches(r.client_name, c.name);
 }
