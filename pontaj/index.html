@@ -2180,13 +2180,16 @@ function renderClienti(container) {
             const cnt  = allEntries.filter(e => clientMatches(e.client, c.name)).length;
             const invCt = allInvoices.filter(i => i.client_name && i.client_name.toLowerCase().includes(c.name.toLowerCase().slice(0,5))).length;
             return `
-              <div class="lsc" style="position:relative;cursor:default">
-                <button onclick="deleteClient('${c.id}')" title="Șterge"
-                  style="position:absolute;top:7px;right:8px;background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;padding:2px 5px;border-radius:4px;transition:color .15s,background .15s"
-                  onmouseover="this.style.color='#e05c5c';this.style.background='rgba(224,92,92,.12)'"
-                  onmouseout="this.style.color='var(--muted)';this.style.background='none'">✕</button>
-                <div class="lsc-name" style="padding-right:20px;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold);letter-spacing:-.01em">${esc(c.name)}</div>
-                ${c.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;margin-bottom:10px;line-height:1.4">${esc(c.notes)}</div>` : '<div style="margin-bottom:10px"></div>'}
+              <div class="lsc" data-client-id="${c.id}" style="position:relative;cursor:default">
+                <div class="lsc-actions" style="position:absolute;top:7px;right:8px;display:flex;gap:4px;align-items:center">
+                  <button class="btn-edit" onclick="editClient('${c.id}')" title="Editează" style="padding:4px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button onclick="deleteClient('${c.id}')" title="Șterge"
+                    style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;padding:2px 5px;border-radius:4px;transition:color .15s,background .15s"
+                    onmouseover="this.style.color='#e05c5c';this.style.background='rgba(224,92,92,.12)'"
+                    onmouseout="this.style.color='var(--muted)';this.style.background='none'">✕</button>
+                </div>
+                <div class="lsc-name" style="padding-right:44px;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold);letter-spacing:-.01em">${esc(c.name)}</div>
+                <div class="lsc-contract" style="font-size:12px;color:var(--muted);margin-top:2px;margin-bottom:10px;line-height:1.4">${c.notes ? esc(c.notes) : '—'}</div>
                 <div class="lsc-row"><span>Intrări</span><span>${cnt}</span></div>
                 <div class="lsc-row"><span>Facturi</span><span>${invCt}</span></div>
               </div>
@@ -2223,6 +2226,37 @@ async function deleteClient(id) {
   if (error) { alert(error.message); return; }
   allClients = allClients.filter(x => x.id !== id);
   _refreshClientDatalist();
+  renderAdminTabContent();
+}
+
+function editClient(id) {
+  const card = document.querySelector(`[data-client-id="${id}"]`);
+  if (!card || card.dataset.editing === '1') return;
+  const c = allClients.find(x => x.id === id);
+  if (!c) return;
+  card.dataset.editing = '1';
+  card.querySelector('.lsc-name').outerHTML =
+    `<input class="tei" type="text" value="${esc(c.name)}" data-f="name" style="width:100%;margin-bottom:4px;padding-right:44px" onkeydown="if(event.key==='Enter')saveClientEdit('${id}')">`;
+  card.querySelector('.lsc-contract').outerHTML =
+    `<input class="tei" type="text" value="${esc(c.notes||'')}" data-f="notes" placeholder="Nr. Contract" style="width:100%;margin-bottom:10px;font-size:12px" onkeydown="if(event.key==='Enter')saveClientEdit('${id}')">`;
+  card.querySelector('.lsc-actions').innerHTML = `
+    <button class="btn-edit-save" onclick="saveClientEdit('${id}')" title="Salvează">✓</button>
+    <button class="btn-edit-cancel" onclick="renderAdminTabContent()" title="Anulează">✕</button>`;
+}
+
+async function saveClientEdit(id) {
+  const card = document.querySelector(`[data-client-id="${id}"]`);
+  if (!card) return;
+  const get = f => card.querySelector(`[data-f="${f}"]`)?.value ?? '';
+  const name  = get('name').trim();
+  const notes = get('notes').trim() || null;
+  if (!name) { alert('Numele este obligatoriu.'); return; }
+  const saveBtn = card.querySelector('.btn-edit-save');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '...'; }
+  const { error } = await db.from('clients').update({ name, notes }).eq('id', id);
+  if (error) { alert(error.message); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '✓'; } return; }
+  allClients = allClients.map(x => x.id === id ? { ...x, name, notes } : x);
+  allClients.sort((a,b) => a.name.localeCompare(b.name));
   renderAdminTabContent();
 }
 
@@ -2635,7 +2669,9 @@ function exportRegistruCSV() {
       Number(r.plata_baza).toFixed(2), Number(r.compensare).toFixed(2), total.toFixed(2),
       r.semnat?'DA':'NU', r.contabilitate?'DA':'NU'];
   });
-  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const totalBaza = sorted.reduce((s,r) => s + (Number(r.plata_baza)||0), 0);
+  const totalRow  = ['', '', '', 'TOTAL', '', '', totalBaza.toFixed(2), '', '', '', ''];
+  const csv = [header, ...rows, totalRow].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   saveAs(blob, `Registru-${todayStr()}.csv`);
 }
