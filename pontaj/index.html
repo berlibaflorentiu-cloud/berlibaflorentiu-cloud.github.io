@@ -1285,6 +1285,15 @@ function clientMatches(entryClient, reportName) {
   return false;
 }
 
+// Link a receipt to a client by contract number when both sides have one,
+// falling back to name-matching only when either field is absent.
+function receiptBelongsToClient(r, c) {
+  if (c.notes && r.contract_nr) {
+    return r.contract_nr.trim().toLowerCase() === c.notes.trim().toLowerCase();
+  }
+  return clientMatches(r.client_name, c.name);
+}
+
 function updateClientMatchHint() {
   const input = document.getElementById('rf-client');
   const hint  = document.getElementById('rf-client-hint');
@@ -2269,7 +2278,7 @@ function renderClienti(container) {
           ${filteredClients.map(c => {
             const cnt    = allEntries.filter(e => clientMatches(e.client, c.name)).length;
             const invCt  = allInvoices.filter(i => i.client_name && i.client_name.toLowerCase().includes(c.name.toLowerCase().slice(0,5))).length;
-            const rcptCt = allReceipts.filter(r => clientMatches(r.client_name, c.name)).length;
+            const rcptCt = allReceipts.filter(r => receiptBelongsToClient(r, c)).length;
             return `
               <div class="lsc" data-client-id="${c.id}" style="position:relative;cursor:pointer" onclick="showClientReceipts('${c.id}', event)">
                 <div class="lsc-actions" style="position:absolute;top:7px;right:8px;display:flex;gap:4px;align-items:center">
@@ -3399,7 +3408,7 @@ function showClientReceipts(clientId, event) {
   if (!c) return;
 
   const receipts = allReceipts
-    .filter(r => clientMatches(r.client_name, c.name))
+    .filter(r => receiptBelongsToClient(r, c))
     .sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
 
   const totalBaza = receipts.reduce((s, r) => s + (Number(r.plata_baza) || 0), 0);
