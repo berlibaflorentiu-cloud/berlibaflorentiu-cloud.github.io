@@ -311,6 +311,28 @@
     }
     .field input:focus, .field select:focus { border-color: var(--gold); }
     .field input::placeholder { color: var(--muted); }
+    .search-bar { position: relative; margin-bottom: 18px; max-width: 360px; }
+    .search-bar input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 9px 12px 9px 36px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .search-bar input:focus { border-color: var(--gold); }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-bar svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search-bar .search-clear {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 13px; padding: 4px 6px; line-height: 1; border-radius: 4px;
+    }
+    .search-bar .search-clear:hover { color: var(--text); background: rgba(255,255,255,.06); }
     .desc-ac {
       background: var(--surface); border: 1px solid var(--gold);
       border-radius: 0 0 8px 8px;
@@ -954,7 +976,7 @@ function initDateRange() {
   };
 }
 const _dr = initDateRange();
-const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin', customGroup: [], adminTab: 'pontaj' };
+const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin', customGroup: [], adminTab: 'pontaj', clientiSearch: '', registruSearch: '' };
 
 const PRESETS = [
   { label: 'Întrevederea la Penitenciar',              price: 1500, type: 'onorariu' },
@@ -1911,6 +1933,24 @@ function renderAdminTabContent() {
   else if (state.adminTab === 'registru')  renderRegistru(el);
 }
 
+function searchClienti(inputEl) {
+  state.clientiSearch = inputEl.value;
+  const pos = inputEl.selectionStart;
+  renderAdminTabContent();
+  const newInput = document.getElementById('clienti-search');
+  if (newInput) { newInput.focus(); newInput.setSelectionRange(pos, pos); }
+}
+function clearClientiSearch() { state.clientiSearch = ''; renderAdminTabContent(); }
+
+function searchRegistru(inputEl) {
+  state.registruSearch = inputEl.value;
+  const pos = inputEl.selectionStart;
+  renderAdminTabContent();
+  const newInput = document.getElementById('registru-search');
+  if (newInput) { newInput.focus(); newInput.setSelectionRange(pos, pos); }
+}
+function clearRegistruSearch() { state.registruSearch = ''; renderAdminTabContent(); }
+
 // ── Tab: Pontaj (existing entries view) ──────────────────
 function renderAdminPontaj(container) {
   const lawyers  = allUsers.filter(u => u.status === 'approved' || !u.status);
@@ -2157,6 +2197,11 @@ function _initCharts(months, topClients) {
 
 // ── Tab: Clienți (admin only) ─────────────────────────────
 function renderClienti(container) {
+  const q = (state.clientiSearch || '').trim().toLowerCase();
+  const filteredClients = !q ? allClients : allClients.filter(c =>
+    c.name.toLowerCase().includes(q) || (c.notes || '').toLowerCase().includes(q)
+  );
+
   container.innerHTML = `
     <div class="add-form" style="margin-bottom:28px">
       <div class="form-title">Client nou</div>
@@ -2173,10 +2218,19 @@ function renderClienti(container) {
       </div>
     </div>
 
+    ${allClients.length === 0 ? '' : `
+    <div class="search-bar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="clienti-search" placeholder="Caută client sau nr. contract..." value="${esc(state.clientiSearch||'')}" oninput="searchClienti(this)" autocomplete="off">
+      ${state.clientiSearch ? `<button class="search-clear" onclick="clearClientiSearch()" title="Șterge căutarea">✕</button>` : ''}
+    </div>`}
+
     ${allClients.length === 0
       ? `<div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-bottom:12px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><p>Niciun client adăugat.<br>Completează formularul de mai sus.</p></div>`
+      : filteredClients.length === 0
+      ? `<div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-bottom:12px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>Niciun client găsit pentru "${esc(state.clientiSearch)}".</p></div>`
       : `<div class="lawyer-grid">
-          ${allClients.map(c => {
+          ${filteredClients.map(c => {
             const cnt    = allEntries.filter(e => clientMatches(e.client, c.name)).length;
             const invCt  = allInvoices.filter(i => i.client_name && i.client_name.toLowerCase().includes(c.name.toLowerCase().slice(0,5))).length;
             const rcptCt = allReceipts.filter(r => clientMatches(r.client_name, c.name)).length;
@@ -2483,7 +2537,15 @@ function _filterInvEntries() {
 
 // ── Tab: Registru (admin only) ────────────────────────────
 function renderRegistru(container) {
-  const sorted = [...allReceipts].sort((a,b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+  const all = [...allReceipts].sort((a,b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+  const q = (state.registruSearch || '').trim().toLowerCase();
+  const sorted = !q ? all : all.filter(r =>
+    (r.client_name||'').toLowerCase().includes(q) ||
+    (r.serie_nr||'').toLowerCase().includes(q) ||
+    (r.cod_personal||'').toLowerCase().includes(q) ||
+    (r.contract_nr||'').toLowerCase().includes(q) ||
+    fmtDate(r.date).toLowerCase().includes(q)
+  );
 
   container.innerHTML = `
     <div class="add-form" style="margin-bottom:28px">
@@ -2521,16 +2583,25 @@ function renderRegistru(container) {
       </div>
     </div>
 
+    ${all.length === 0 ? '' : `
+    <div class="search-bar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="registru-search" placeholder="Caută client, serie, cod personal, contract..." value="${esc(state.registruSearch||'')}" oninput="searchRegistru(this)" autocomplete="off">
+      ${state.registruSearch ? `<button class="search-clear" onclick="clearRegistruSearch()" title="Șterge căutarea">✕</button>` : ''}
+    </div>`}
+
     <div class="table-wrap">
       <div class="table-header">
         <div style="display:flex;align-items:center;gap:12px">
-          <span class="table-title">Registru chitanțe (${sorted.length})</span>
+          <span class="table-title">Registru chitanțe (${sorted.length}${q ? ` din ${all.length}` : ''})</span>
           ${sorted.length ? `<span class="reg-total-badge">Total plată de bază: ${fmtMoney(sorted.reduce((s,r) => s + (Number(r.plata_baza)||0), 0))}</span>` : ''}
         </div>
-        ${sorted.length ? `<button class="btn-ghost" onclick="exportRegistruCSV()" style="font-size:12px">↓ Export CSV</button>` : ''}
+        ${all.length ? `<button class="btn-ghost" onclick="exportRegistruCSV()" style="font-size:12px">↓ Export CSV</button>` : ''}
       </div>
-      ${sorted.length === 0
+      ${all.length === 0
         ? `<div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-bottom:12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><p>Nicio înregistrare în registru.<br>Completează formularul de mai sus.</p></div>`
+        : sorted.length === 0
+        ? `<div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-bottom:12px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>Nicio înregistrare găsită pentru "${esc(state.registruSearch)}".</p></div>`
         : `<div class="reg-wrap"><table class="reg-table">
             <thead><tr>
               <th class="reg-nr">Nr.</th>
