@@ -2420,6 +2420,23 @@ function autofillContractNr(inputEl, client) {
   if (target) target.value = client.notes;
 }
 
+// Reverse: auto-fills the client name field when a contract number is typed
+// and it matches a known client's notes field (substring match both ways).
+const CLIENT_FROM_CONTRACT = { 'rg-contract': 'rg-client', 'rf-contract-nr': 'rf-client', 'inv-notes': 'inv-client' };
+function autofillClientName(el) {
+  const targetId = CLIENT_FROM_CONTRACT[el.id];
+  if (!targetId) return;
+  const val = el.value.trim().toLowerCase();
+  if (!val || val.length < 5) return;
+  const match = allClients.find(c => {
+    if (!c.notes) return false;
+    const cn = c.notes.trim().toLowerCase();
+    return cn.includes(val) || val.includes(cn);
+  });
+  const target = document.getElementById(targetId);
+  if (match && target) target.value = match.name;
+}
+
 function closeClientAc() {
   const ac = document.getElementById('client-ac');
   if (ac) ac.style.display = 'none';
@@ -2529,7 +2546,7 @@ function openCreateInvoice() {
       </div>
       <div class="field">
         <label>Note (opțional)</label>
-        <input type="text" id="inv-notes" class="auth-input" placeholder="ex. nr. contract, observații..." style="background:var(--bg)">
+        <input type="text" id="inv-notes" class="auth-input" placeholder="ex. nr. contract, observații..." style="background:var(--bg)" oninput="autofillClientName(this)">
       </div>
       <div style="background:var(--surface2);border-radius:8px;padding:14px">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px">Intrări de inclus</div>
@@ -2699,7 +2716,7 @@ function renderRegistru(container) {
         </div>
         <div class="field">
           <label>Nr. Contractului</label>
-          <input type="text" id="rg-contract" placeholder="ex. VB-17.285/03-24" autocomplete="off">
+          <input type="text" id="rg-contract" placeholder="ex. VB-17.285/03-24" autocomplete="off" oninput="autofillClientName(this)">
         </div>
         <div class="field">
           <label>Plată de bază (MDL)</label>
@@ -3091,7 +3108,7 @@ async function showReportForm() {
       <div style="display:flex;gap:12px">
         <div class="field" style="flex:1">
           <label>Nr. contract</label>
-          <input type="text" id="rf-contract-nr" value="${settings.lastContractNr || ''}" placeholder="ex. VB-19.503/04-26">
+          <input type="text" id="rf-contract-nr" value="${settings.lastContractNr || ''}" placeholder="ex. VB-19.503/04-26" oninput="autofillClientName(this)">
         </div>
         <div class="field" style="flex:1">
           <label>Data contractului</label>
