@@ -967,6 +967,7 @@ let actTemplates      = [];
 let allClients        = [];
 let allInvoices       = [];
 let allInvoiceEntries = [];
+let _invEditId        = null;
 let allReceipts       = [];
 
 function initDateRange() {
@@ -2439,6 +2440,10 @@ function renderFacturi(container) {
                       ? `<span style="font-size:14px;font-variant-numeric:tabular-nums">${fmtEarnings({eur:inv.total_eur||0,mdl:inv.total_mdl||0})}</span>`
                       : ''}
                     <span class="inv-badge ${inv.status}">${statusLabel}</span>
+                    <div style="display:flex;gap:4px" onclick="event.stopPropagation()">
+                      <button class="btn-edit" onclick="openEditInvoice('${inv.id}')" title="Editează"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                      <button class="btn-delete" onclick="deleteInvoice('${inv.id}')" title="Șterge">✕</button>
+                    </div>
                   </div>
                 </div>
               `;
@@ -2450,7 +2455,7 @@ function renderFacturi(container) {
 }
 
 function openCreateInvoice() {
-  const billedIds = new Set(allInvoiceEntries.map(ie => ie.entry_id));
+  _invEditId = null;
   document.getElementById('modal-title').textContent = 'Factură nouă';
   document.getElementById('modal-actions').innerHTML = `<button class="btn-ghost" onclick="closeModal()">✕</button>`;
   document.getElementById('modal-body').innerHTML = `
@@ -2462,7 +2467,7 @@ function openCreateInvoice() {
         </div>
         <div class="field">
           <label>Client</label>
-          <input type="text" id="inv-client" class="auth-input" placeholder="Nume client / dosar" style="background:var(--bg)" autocomplete="off" autocorrect="off" spellcheck="false" oninput="clientAcInput(this)" onkeydown="clientAcKeydown(event)" onblur="setTimeout(closeClientAc,200)">
+          <input type="text" id="inv-client" class="auth-input" placeholder="Nume client / dosar" style="background:var(--bg)" autocomplete="off" autocorrect="off" spellcheck="false" oninput="_invClientChanged(this)" onkeydown="clientAcKeydown(event)" onblur="setTimeout(closeClientAc,200)">
           <datalist id="inv-client-list">
             ${allClients.map(c => `<option value="${esc(c.name)}">`).join('')}
           </datalist>
@@ -2496,26 +2501,105 @@ function openCreateInvoice() {
   _filterInvEntries();
 }
 
+function openEditInvoice(id) {
+  const inv = allInvoices.find(i => i.id === id);
+  if (!inv) return;
+  _invEditId = id;
+  document.getElementById('modal-title').textContent = 'Editează factura';
+  document.getElementById('modal-actions').innerHTML = `<button class="btn-ghost" onclick="closeModal()">✕</button>`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:16px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label>Număr factură</label>
+          <input type="text" id="inv-number" class="auth-input" value="${esc(inv.number)}" style="background:var(--bg)">
+        </div>
+        <div class="field">
+          <label>Client</label>
+          <input type="text" id="inv-client" class="auth-input" value="${esc(inv.client_name||'')}" placeholder="Nume client / dosar" style="background:var(--bg)" autocomplete="off" autocorrect="off" spellcheck="false" oninput="_invClientChanged(this)" onkeydown="clientAcKeydown(event)" onblur="setTimeout(closeClientAc,200)">
+          <datalist id="inv-client-list">
+            ${allClients.map(c => `<option value="${esc(c.name)}">`).join('')}
+          </datalist>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label>Perioadă de la</label>
+          <input type="date" id="inv-from" class="auth-input" value="${inv.date_from || state.dateStart}" style="background:var(--bg)" onchange="_filterInvEntries()">
+        </div>
+        <div class="field">
+          <label>Perioadă până la</label>
+          <input type="date" id="inv-to" class="auth-input" value="${inv.date_to || state.dateEnd}" style="background:var(--bg)" onchange="_filterInvEntries()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Note (opțional)</label>
+        <input type="text" id="inv-notes" class="auth-input" value="${esc(inv.notes||'')}" placeholder="ex. nr. contract, observații..." style="background:var(--bg)">
+      </div>
+      <div style="background:var(--surface2);border-radius:8px;padding:14px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px">Intrări de inclus</div>
+        <div id="inv-entries-list"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:4px">
+        <button class="btn-ghost" onclick="closeModal()">Anulează</button>
+        <button class="btn-primary" id="btn-save-invoice" onclick="saveInvoice('${id}')">Salvează modificările</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-overlay').style.display = 'flex';
+  _filterInvEntries();
+}
+
+// When the admin types/picks a client name on the invoice form, widen the
+// date range to bracket every unbilled entry for that client so none are
+// silently excluded — _filterInvEntries() then restricts the list to that
+// client and only that client.
+function _invClientChanged(inputEl) {
+  clientAcInput(inputEl);
+  const name = inputEl.value.trim();
+  if (name) {
+    const editId    = _invEditId;
+    const billedIds = new Set(allInvoiceEntries.filter(ie => ie.invoice_id !== editId).map(ie => ie.entry_id));
+    const matches   = allEntries.filter(e => !billedIds.has(e.id) && clientMatches(e.client, name));
+    if (matches.length) {
+      const dates = matches.map(e => e.date).sort();
+      const fromEl = document.getElementById('inv-from');
+      const toEl   = document.getElementById('inv-to');
+      if (fromEl && (!fromEl.value || dates[0] < fromEl.value)) fromEl.value = dates[0];
+      if (toEl   && (!toEl.value   || dates[dates.length-1] > toEl.value))   toEl.value = dates[dates.length-1];
+    }
+  }
+  _filterInvEntries();
+}
+
 function _filterInvEntries() {
   const from = document.getElementById('inv-from')?.value;
   const to   = document.getElementById('inv-to')?.value;
   if (!from || !to) return;
-  const billedIds = new Set(allInvoiceEntries.map(ie => ie.entry_id));
+  const clientName = document.getElementById('inv-client')?.value.trim();
+  const editId      = _invEditId;
+  // Entries already billed to a *different* invoice stay excluded; entries
+  // already on the invoice being edited remain eligible (and stay checked).
+  const billedIds   = new Set(allInvoiceEntries.filter(ie => ie.invoice_id !== editId).map(ie => ie.entry_id));
+  const editEntryIds = editId
+    ? new Set(allInvoiceEntries.filter(ie => ie.invoice_id === editId).map(ie => ie.entry_id))
+    : new Set();
   const userMap   = Object.fromEntries(allUsers.map(u => [u.id, u]));
-  const entries   = filterEntries(allEntries, from, to, null)
-    .filter(e => !billedIds.has(e.id))
-    .sort((a,b) => b.date.localeCompare(a.date));
+  let entries = filterEntries(allEntries, from, to, null).filter(e => !billedIds.has(e.id));
+  if (clientName) entries = entries.filter(e => clientMatches(e.client, clientName));
+  entries = entries.sort((a,b) => b.date.localeCompare(a.date));
   const el = document.getElementById('inv-entries-list');
   if (!el) return;
   if (!entries.length) {
-    el.innerHTML = `<p style="font-size:13px;color:var(--muted);text-align:center;padding:10px 0">Nicio intrare nefacturată în această perioadă.</p>`;
+    el.innerHTML = `<p style="font-size:13px;color:var(--muted);text-align:center;padding:10px 0">Nicio intrare nefacturată${clientName ? ' pentru acest client' : ''} în această perioadă.</p>`;
     return;
   }
-  const totalH = sumH(entries);
-  const totalM = splitEarnings(entries, e => allUsers.find(u => u.id === e.user_id)?.rate);
+  const totalH    = sumH(entries);
+  const totalM    = splitEarnings(entries, e => allUsers.find(u => u.id === e.user_id)?.rate);
+  const isChecked = e => !editId || editEntryIds.has(e.id);
   el.innerHTML = `
     <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--gold);margin-bottom:10px">
-      <input type="checkbox" id="inv-sel-all" checked onchange="document.querySelectorAll('.inv-ecb').forEach(c=>c.checked=this.checked)" style="accent-color:var(--gold)">
+      <input type="checkbox" id="inv-sel-all" ${entries.every(isChecked) ? 'checked' : ''} onchange="document.querySelectorAll('.inv-ecb').forEach(c=>c.checked=this.checked)" style="accent-color:var(--gold)">
       Selectează toate (${entries.length} intrări · ${totalH.toFixed(1)}h · ${fmtEarnings(totalM)})
     </label>
     <div style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:3px">
@@ -2525,7 +2609,7 @@ function _filterInvEntries() {
         return `
           <label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .1s"
             onmouseover="this.style.background='rgba(200,169,110,.06)'" onmouseout="this.style.background='none'">
-            <input type="checkbox" class="inv-ecb" value="${e.id}" checked style="accent-color:var(--gold);flex-shrink:0">
+            <input type="checkbox" class="inv-ecb" value="${e.id}" ${isChecked(e) ? 'checked' : ''} style="accent-color:var(--gold);flex-shrink:0">
             <span style="color:var(--muted);min-width:68px;flex-shrink:0">${fmtDate(e.date)}</span>
             <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.description)}${e.client?` <em style="color:var(--muted)">(${esc(e.client)})</em>`:''}</span>
             <span style="color:var(--muted);font-size:12px;flex-shrink:0">${u?.name?.split(' ')[0]||''}</span>
@@ -2754,7 +2838,7 @@ function exportRegistruCSV() {
   saveAs(blob, `Registru-${todayStr()}.csv`);
 }
 
-async function saveInvoice() {
+async function saveInvoice(editId) {
   const number     = document.getElementById('inv-number')?.value.trim();
   const clientName = document.getElementById('inv-client')?.value.trim() || null;
   const from       = document.getElementById('inv-from')?.value;
@@ -2768,6 +2852,25 @@ async function saveInvoice() {
   const btn = document.getElementById('btn-save-invoice');
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
 
+  if (editId) {
+    const updates = { number, client_name: clientName, date_from: from, date_to: to, notes, total_eur: totals.eur, total_mdl: totals.mdl };
+    const { error } = await db.from('invoices').update(updates).eq('id', editId);
+    if (error) { alert(error.message); if (btn) { btn.disabled = false; btn.textContent = 'Salvează modificările'; } return; }
+
+    const { error: dl } = await db.from('invoice_entries').delete().eq('invoice_id', editId);
+    if (dl) { alert('Factura a fost actualizată, dar legăturile vechi n-au putut fi șterse: ' + dl.message); }
+    const links = selectedIds.map(entry_id => ({ invoice_id: editId, entry_id }));
+    const { error: le } = await db.from('invoice_entries').insert(links);
+    if (le) { alert('Factura a fost actualizată, dar legăturile noi n-au putut fi salvate: ' + le.message); }
+
+    allInvoices = allInvoices.map(i => i.id === editId ? { ...i, ...updates } : i);
+    allInvoiceEntries = allInvoiceEntries.filter(ie => ie.invoice_id !== editId).concat(links);
+    _invEditId = null;
+    closeModal();
+    renderAdminTabContent();
+    return;
+  }
+
   const { data: inv, error } = await db.from('invoices').insert({
     number, client_name: clientName, date_from: from, date_to: to, notes,
     status: 'draft', created_by: currentUser.id,
@@ -2780,6 +2883,19 @@ async function saveInvoice() {
   if (le) { alert('Factura creată, dar legăturile n-au putut fi salvate: ' + le.message); }
   allInvoices.unshift(inv);
   allInvoiceEntries.push(...links);
+  closeModal();
+  renderAdminTabContent();
+}
+
+async function deleteInvoice(id) {
+  const inv = allInvoices.find(i => i.id === id);
+  if (!confirm(`Ștergi factura "${inv?.number || id}"? Acțiunea nu poate fi anulată.`)) return;
+  const { error: le } = await db.from('invoice_entries').delete().eq('invoice_id', id);
+  if (le) { alert(le.message); return; }
+  const { error } = await db.from('invoices').delete().eq('id', id);
+  if (error) { alert(error.message); return; }
+  allInvoices = allInvoices.filter(i => i.id !== id);
+  allInvoiceEntries = allInvoiceEntries.filter(ie => ie.invoice_id !== id);
   closeModal();
   renderAdminTabContent();
 }
@@ -2798,6 +2914,8 @@ function viewInvoice(id) {
   document.getElementById('modal-title').textContent = inv.number;
   document.getElementById('modal-actions').innerHTML = `
     ${next ? `<button class="btn-primary" onclick="advanceInvoice('${id}','${next}')">${NLBL[inv.status]}</button>` : ''}
+    <button class="btn-ghost" onclick="openEditInvoice('${id}')">Editează</button>
+    <button class="btn-ghost" onclick="deleteInvoice('${id}')" style="color:var(--red)">Șterge</button>
     <button class="btn-ghost" onclick="closeModal()">✕</button>
   `;
   document.getElementById('modal-body').innerHTML = `
@@ -3302,7 +3420,7 @@ function showClientReceipts(clientId, event) {
   document.getElementById('modal-overlay').style.display = 'flex';
 }
 
-function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; _invEditId = null; }
 function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
 
 // ═══════════════════════════════════════
