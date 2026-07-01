@@ -1238,14 +1238,71 @@
     .cf-tab.active { background:var(--white); color:var(--navy); }
     .cf-panel { display:none; }
     .cf-panel.active { display:block; animation:fadeTab .35s ease; }
-    #calendly-mount { border-radius:10px; overflow:hidden; }
-    .cf-soon {
-      text-align:center; padding:60px 24px; color:rgba(255,255,255,.62);
-      border:1px dashed rgba(255,255,255,.16); border-radius:12px;
-    }
-    .cf-soon svg { width:34px; height:34px; color:var(--blue); margin-bottom:16px; }
-    .cf-soon p { font-size:15px; line-height:1.5; }
-    .cf-soon-sub { font-size:13px; color:rgba(255,255,255,.42); margin-top:8px; }
+    /* ─── Self-hosted scheduler — navy, sequential (calendar → slots → details) ─── */
+    .cly { color:#fff; }
+    .cly, .cly * { box-sizing:border-box; }
+    .cly-step { display:none; }
+    .cly-step.active { display:block; animation:fadeTab .38s ease; }
+
+    .cly-h { font-family:var(--ff-serif); font-size:22px; font-weight:600; color:#fff; margin-bottom:4px; }
+    .cly-lead { font-size:13px; color:rgba(255,255,255,.45); margin-bottom:16px; }
+    .cly-dur { display:inline-flex; gap:4px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:4px; margin-bottom:24px; }
+    .cly-dur button { border:none; background:none; color:rgba(255,255,255,.6); font-family:var(--ff-sans); font-size:13px; font-weight:600; padding:8px 15px; border-radius:7px; cursor:pointer; transition:background .18s, color .18s; }
+    .cly-dur button:hover:not(.active) { color:#fff; }
+    .cly-dur button.active { background:#fff; color:var(--navy); }
+
+    /* Top bar with back button (steps 2 & 3) */
+    .cly-bar { display:flex; align-items:center; gap:13px; margin-bottom:22px; }
+    .cly-back { flex-shrink:0; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .18s, border-color .18s; }
+    .cly-back:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.45); }
+    .cly-back svg { width:17px; height:17px; }
+    .cly-bar-t { font-family:var(--ff-serif); font-size:20px; font-weight:600; color:#fff; line-height:1.15; }
+    .cly-bar-s { font-size:12.5px; color:rgba(255,255,255,.5); margin-top:2px; text-transform:capitalize; }
+
+    /* Calendar */
+    .cly-cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .cly-cal-month { font-size:17px; font-weight:600; color:#fff; letter-spacing:.01em; }
+    .cly-cal-arrow { width:40px; height:40px; border-radius:50%; border:none; background:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:rgba(255,255,255,.85); transition:background .18s, color .18s; }
+    .cly-cal-arrow:hover { background:rgba(255,255,255,.1); color:#fff; }
+    .cly-cal-arrow:disabled { opacity:.22; cursor:not-allowed; background:none; }
+    .cly-dow { display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px; }
+    .cly-dow span { text-align:center; font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.3); }
+    .cly-days { display:grid; grid-template-columns:repeat(7,1fr); }
+    .cly-day-cell { display:flex; align-items:center; justify-content:center; padding:3px 0; }
+    .cly-day { position:relative; width:46px; height:46px; max-width:100%; border-radius:50%; border:none; background:none; color:#fff; cursor:pointer; font-family:var(--ff-sans); font-size:15px; font-weight:500; transition:background .18s ease, color .18s ease; }
+    .cly-day:hover { background:#fff; color:var(--navy); }
+    .cly-day.today { font-weight:700; }
+    .cly-day.today::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:currentColor; }
+    .cly-day.off { color:rgba(255,255,255,.18); cursor:not-allowed; font-weight:400; }
+    .cly-day.off:hover { background:none; color:rgba(255,255,255,.18); }
+    .cly-day.empty { background:none; cursor:default; }
+    .cly-tz { display:flex; align-items:center; gap:8px; margin-top:24px; padding-top:20px; border-top:1px solid rgba(255,255,255,.09); font-size:12.5px; color:rgba(255,255,255,.4); }
+    .cly-tz svg { width:15px; height:15px; opacity:.7; flex-shrink:0; }
+
+    /* Time slots (step 2) */
+    .cly-slots { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .cly-slot { padding:16px 8px; border-radius:11px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.04); color:#fff; font-family:var(--ff-sans); font-size:15px; font-weight:600; letter-spacing:.02em; cursor:pointer; transition:background .16s, border-color .16s, transform .12s; }
+    .cly-slot:hover { background:#fff; color:var(--navy); border-color:#fff; transform:translateY(-2px); }
+    .cly-slots-empty { grid-column:1/-1; text-align:center; padding:36px 10px; color:rgba(255,255,255,.5); font-size:14px; line-height:1.6; }
+    .cly-slots-err { grid-column:1/-1; text-align:center; padding:32px 10px; color:#ff9b9b; font-size:14px; line-height:1.6; }
+    .cly-loading { grid-column:1/-1; text-align:center; padding:46px 10px; }
+    .cly-spin { display:inline-block; width:26px; height:26px; border:2.5px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+
+    /* Details (step 3) — reuses .frow/.fg/.fl/.fi/.fsel/.fta form styles */
+    .cly-when { display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); font-size:14px; font-weight:600; color:#fff; margin-bottom:22px; }
+    .cly-when svg { width:17px; height:17px; opacity:.8; flex-shrink:0; }
+    .cly-err { margin-top:13px; padding:11px 15px; border-radius:8px; background:rgba(255,90,90,.12); border:1px solid rgba(255,90,90,.3); font-size:13px; color:#ffb3b3; display:none; }
+
+    /* Success (step 4) */
+    .cly-done { text-align:center; padding:26px 10px 30px; }
+    .cly-done-ic { width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; margin:0 auto 24px; }
+    .cly-done-ic svg { width:34px; height:34px; color:#fff; }
+    .cly-done h3 { font-family:var(--ff-serif); font-size:27px; font-weight:600; color:#fff; margin-bottom:12px; }
+    .cly-done p { font-size:14.5px; color:rgba(255,255,255,.55); line-height:1.65; max-width:380px; margin:0 auto 24px; }
+    .cly-done-card { display:inline-flex; align-items:center; gap:10px; padding:14px 22px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); font-size:14px; font-weight:600; color:#fff; }
+    .cly-done-card svg { width:18px; height:18px; opacity:.8; flex-shrink:0; }
+
+    @media (max-width:600px) { .cly-slots { grid-template-columns:repeat(2,1fr); } }
 
     .frow { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
     .fg { margin-bottom:16px; }
@@ -2484,6 +2541,42 @@
       </script>
 
       <!-- 1 · Jun 10 2026 · Moldova1 · Chirtoacă -->
+      <!-- Cușnir v. Republica Moldova · 11 iun. 2026 · CEDO -->
+      <a class="news-card" href="https://agent.gov.md/comunicate-de-presa/cu-nir-v-republica-moldova/" target="_blank" rel="noopener">
+        <div class="news-thumb">
+          <div class="news-thumb-bg" style="background-image:url('https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=600&q=70&fit=crop');"></div>
+          <div class="news-thumb-overlay"></div>
+          <span class="news-thumb-src">agent.gov.md</span>
+        </div>
+        <div class="news-body">
+          <div class="news-meta">
+            <span class="news-source">Agentul Guvernamental</span>
+            <span class="news-date">11 iun. 2026</span>
+          </div>
+          <h3 class="news-title">Cușnir v. Republica Moldova — CEDO constată încălcarea art. 3 în urma relelor tratamente aplicate de polițiști</h3>
+          <p class="news-excerpt">Curtea Europeană a Drepturilor Omului a constatat că ancheta națională privind relele tratamente suferite de reclamantă — deputat la acea dată — din partea polițiștilor în 2009 a fost ineficientă, violând obligația procedurală a art. 3 din Convenție.</p>
+          <span class="news-cta">Citește hotărârea <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Grafescolo S.R.L. v. Republica Moldova · 11 iun. 2026 · CEDO -->
+      <a class="news-card" href="https://agent.gov.md/comunicate-de-presa/grafescolo-s-r-l-v-republica-moldova/" target="_blank" rel="noopener">
+        <div class="news-thumb">
+          <div class="news-thumb-bg" style="background-image:url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&q=70&fit=crop');"></div>
+          <div class="news-thumb-overlay"></div>
+          <span class="news-thumb-src">agent.gov.md</span>
+        </div>
+        <div class="news-body">
+          <div class="news-meta">
+            <span class="news-source">Agentul Guvernamental</span>
+            <span class="news-date">11 iun. 2026</span>
+          </div>
+          <h3 class="news-title">Grafescolo S.R.L. v. Republica Moldova — CEDO sancționează încălcarea dreptului la un proces echitabil în litigiu funciar</h3>
+          <p class="news-excerpt">Curtea Europeană a constatat că instanța supremă nu a analizat obiecția privind lipsa împuternicirilor primarului și s-a bazat pe argumente nediscutate de părți, violând principiul egalității armelor garantat de art. 6 din Convenție.</p>
+          <span class="news-cta">Citește hotărârea <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
       <a class="news-card" href="https://moldova1.md/p/78119/dosarul-parcarilor-cu-plata--dorin-chirtoaca--o-victorie-amara--procuratura-analizeaza-oportunitatea-recursului-la-csj" target="_blank" rel="noopener">
         <div class="news-thumb">
           <div class="news-thumb-bg" style="background-image:url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&q=70&fit=crop');"></div>
@@ -2516,6 +2609,24 @@
           <h3 class="news-title">Atacurile asupra avocaților sunt atacuri asupra justiției: Cazul Violeta Gașițoi și Gabriela Kornaker</h3>
           <p class="news-excerpt">Două avocate care reprezintă familia victimei Ludmila Vartic se confruntă cu campanii de hărțuire online coordonate. Autoarea argumentează că atacurile asupra apărătorilor subminează dreptul la un proces echitabil.</p>
           <span class="news-cta">Lire l'article <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- V.I. v. Republica Moldova și Rusia · 21 mai 2026 · CEDO -->
+      <a class="news-card" href="https://agent.gov.md/comunicate-de-presa/v-i-v-republica-moldova-i-rusia/" target="_blank" rel="noopener">
+        <div class="news-thumb">
+          <div class="news-thumb-bg" style="background-image:url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&q=70&fit=crop');"></div>
+          <div class="news-thumb-overlay"></div>
+          <span class="news-thumb-src">agent.gov.md</span>
+        </div>
+        <div class="news-body">
+          <div class="news-meta">
+            <span class="news-source">Agentul Guvernamental</span>
+            <span class="news-date">21 mai 2026</span>
+          </div>
+          <h3 class="news-title">V.I. v. Republica Moldova și Rusia — Federația Rusă condamnată pentru divulgarea datelor medicale ale unui cetățean din Transnistria</h3>
+          <p class="news-excerpt">CEDO a stabilit că Rusia, exercitând control efectiv asupra regiunii transnistrene, este responsabilă pentru divulgarea informațiilor medicale confidențiale ale reclamantului prin documente militare, violând art. 8 din Convenție. Reclamantul a primit 11.000 EUR despăgubiri.</p>
+          <span class="news-cta">Citește hotărârea <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
         </div>
       </a>
 
@@ -2860,10 +2971,116 @@
         </div>
 
         <div class="cf-panel active" id="panel-book" role="tabpanel" aria-labelledby="tab-book">
-          <!-- Calendly inline scheduler. SETUP: paste your Calendly link into the
-               CALENDLY_URL variable in the <script> near the end of this file.
-               Your available hours are configured in the Calendly dashboard, not here. -->
-          <div id="calendly-mount"></div>
+          <!-- Self-hosted Calendly-style scheduler. Books straight into the
+               office@bunpartener.md Google Calendar via the Apps Script bridge
+               (GAS_URL in the <script> near the end of this file). -->
+          <div class="cly" id="cly">
+
+            <!-- STEP 1 — calendar only -->
+            <div class="cly-step active" id="cly-step-cal">
+              <div class="cly-h" data-t="h">Alege o dată</div>
+              <div class="cly-lead" data-t="lead">Consultație juridică — alegeți durata</div>
+              <div class="cly-dur" id="cly-dur" role="group" data-ta="durAria" aria-label="Durata consultației">
+                <button type="button" data-min="30">30 min</button>
+                <button type="button" class="active" data-min="60">1 oră</button>
+                <button type="button" data-min="120">2 ore</button>
+              </div>
+              <div class="cly-cal-nav">
+                <button type="button" class="cly-cal-arrow" id="cly-prev" data-ta="prevM" aria-label="Luna anterioară">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div class="cly-cal-month" id="cly-month"></div>
+                <button type="button" class="cly-cal-arrow" id="cly-next" data-ta="nextM" aria-label="Luna următoare">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+              <div class="cly-dow" id="cly-dow" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+              <div class="cly-days" id="cly-days" role="grid" aria-label="Calendar"></div>
+              <div class="cly-tz">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span data-t="tz">Ora Republicii Moldova (Chișinău)</span>
+              </div>
+            </div>
+
+            <!-- STEP 2 — time slots -->
+            <div class="cly-step" id="cly-step-slots">
+              <div class="cly-bar">
+                <button type="button" class="cly-back" id="cly-back-cal" data-ta="backCal" aria-label="Înapoi la calendar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div>
+                  <div class="cly-bar-t" data-t="barTime">Alege ora</div>
+                  <div class="cly-bar-s" id="cly-slots-date"></div>
+                </div>
+              </div>
+              <div class="cly-slots" id="cly-slots"></div>
+            </div>
+
+            <!-- STEP 3 — details -->
+            <div class="cly-step" id="cly-step-form">
+              <div class="cly-bar">
+                <button type="button" class="cly-back" id="cly-back-slots" data-ta="backSlots" aria-label="Înapoi la ore">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div><div class="cly-bar-t" data-t="barForm">Datele tale</div></div>
+              </div>
+              <div class="cly-when" id="cly-when">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span></span>
+              </div>
+              <form id="cly-form" novalidate>
+                <div class="frow">
+                  <div class="fg">
+                    <label class="fl" for="cly-name"><span data-t="fName">Nume complet</span> <span class="req" aria-hidden="true">*</span></label>
+                    <input class="fi" id="cly-name" type="text" autocomplete="name" data-tp="phName" placeholder="Ion Popescu" required>
+                  </div>
+                  <div class="fg">
+                    <label class="fl" for="cly-phone"><span data-t="fPhone">Telefon</span> <span class="req" aria-hidden="true">*</span></label>
+                    <input class="fi" id="cly-phone" type="tel" autocomplete="tel" placeholder="+373 6X XXX XXX" required>
+                  </div>
+                </div>
+                <div class="fg">
+                  <label class="fl" for="cly-email" data-t="fEmail">Email</label>
+                  <input class="fi" id="cly-email" type="email" autocomplete="email" data-tp="phEmail" placeholder="email@exemplu.com">
+                </div>
+                <div class="frow">
+                  <div class="fg">
+                    <label class="fl" for="cly-type" data-t="fType">Tip întâlnire</label>
+                    <select class="fsel fi" id="cly-type"></select>
+                  </div>
+                  <div class="fg">
+                    <label class="fl" for="cly-domain" data-t="fDomain">Domeniu juridic</label>
+                    <select class="fsel fi" id="cly-domain"></select>
+                  </div>
+                </div>
+                <div class="fg">
+                  <label class="fl" for="cly-notes" data-t="fNotes">Detalii (opțional)</label>
+                  <textarea class="fta" id="cly-notes" data-tp="phNotes" placeholder="Descrieți pe scurt situația juridică pentru care solicitați consultație…"></textarea>
+                </div>
+                <button type="submit" class="btn-w fsub" id="cly-submit">
+                  <span data-t="submit">Confirmă programarea</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <div class="cly-err" id="cly-err" role="alert"></div>
+              </form>
+            </div>
+
+            <!-- STEP 4 — success -->
+            <div class="cly-step" id="cly-step-done">
+              <div class="cly-done">
+                <div class="cly-done-ic" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h3 data-t="doneH">Programare confirmată</h3>
+                <p id="cly-done-msg"></p>
+                <div class="cly-done-card" id="cly-done-when">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         <div class="cf-panel" id="panel-msg" role="tabpanel" aria-labelledby="tab-msg">
@@ -2929,53 +3146,240 @@
   });
 })();
 
-/* ── Contact: Calendly inline scheduler ──────────────────────────────
-   ▸ SETUP: paste your Calendly link between the quotes below, e.g.
-       var CALENDLY_URL = "https://calendly.com/bunpartener/consultatie";
-   ▸ Leave it empty ("") to show a tasteful "coming soon" notice instead.
-   ▸ Available hours, meeting length, timezone, reminders and calendar
-     sync are all configured in your Calendly dashboard — not in this file. */
+/* ── Contact: self-hosted scheduler → office@bunpartener.md Google Calendar ──
+   Books through the Apps Script bridge (deployed from the office account).
+   Available hours, slot length and lead time are configured just below. */
 (function () {
-  var CALENDLY_URL = "https://calendly.com/office-bunpartener/30min";
+  var root = document.getElementById('cly');
+  if (!root) return;
 
-  var mount = document.getElementById('calendly-mount');
-  if (!mount) return;
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbz1Q022cMbKgIT2CpgTMR8io8t742Gi27gISxyQ1w3CpRZF-yGcuUWZNKJ1w8WN7Z8L/exec';
+  var SECRET  = '9665a63184b8e20e1f0b3e7699e345b74528b1e5';
+  var LEAD_H = 2, WINDOW_DAYS = 90;
+  /* Working hours per weekday (0=Sun … 6=Sat) → [firstHour, lastHourExclusive]; null = closed */
+  var HOURS = { 1:[9,18], 2:[9,18], 3:[9,18], 4:[9,18], 5:[9,18], 6:[10,14], 0:null };
 
-  if (!CALENDLY_URL) {
-    mount.innerHTML =
-      '<div class="cf-soon">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>' +
-        '<p>Programarea online va fi disponibilă în curând.</p>' +
-        '<p class="cf-soon-sub">Între timp, sunați-ne la +373 60 300 165 sau folosiți fila „Trimite un mesaj”.</p>' +
-      '</div>';
-    return;
+  // Stable option values (always sent to the backend in Romanian) — display text is translated.
+  var TYPE_VALS = ['Telefonic', 'Video', 'La birou'];
+  var DOM_VALS  = ['Drept Penal', 'Drept Civil', 'Dreptul Familiei', 'Drept Comercial', 'Drept Administrativ', 'Dreptul Muncii', 'Imobiliare', 'Altele'];
+
+  var L = {
+    ro: { locale:'ro-RO', h:'Alege o dată', lead:'Consultație juridică — alegeți durata', dur:['30 min','1 oră','2 ore'], durAria:'Durata consultației', prevM:'Luna anterioară', nextM:'Luna următoare', dow:['L','M','M','J','V','S','D'], tz:'Ora Republicii Moldova (Chișinău)', barTime:'Alege ora', barForm:'Datele tale', backCal:'Înapoi la calendar', backSlots:'Înapoi la ore', fName:'Nume complet', fPhone:'Telefon', fEmail:'Email', fType:'Tip întâlnire', fDomain:'Domeniu juridic', fNotes:'Detalii (opțional)', phName:'Ion Popescu', phEmail:'email@exemplu.com', phNotes:'Descrieți pe scurt situația juridică pentru care solicitați consultație…', types:['Telefonic','Video (online)','La birou'], domSelect:'Selectați…', domains:['Drept Penal','Drept Civil','Dreptul Familiei','Drept Comercial','Drept Administrativ','Dreptul Muncii','Imobiliare și Proprietate','Altele'], submit:'Confirmă programarea', sending:'Se trimite…', doneH:'Programare confirmată', doneMsg:'Am rezervat consultația dumneavoastră. Un avocat vă va contacta telefonic pentru a confirma detaliile.', noSlots:'Nu mai sunt ore disponibile în această zi.<br>Alegeți o altă dată.', errLoad:'Nu s-au putut încărca orele disponibile.<br>Vă rugăm sunați la +373 60 300 165.', errName:'Vă rugăm introduceți numele complet.', errPhone:'Vă rugăm introduceți numărul de telefon.', errTime:'Vă rugăm selectați o oră.', errSubmit:'Programarea nu a putut fi finalizată: {e}. Vă rugăm sunați la +373 60 300 165.' },
+    en: { locale:'en-GB', h:'Pick a date', lead:'Legal consultation — choose the duration', dur:['30 min','1 hour','2 hours'], durAria:'Consultation duration', prevM:'Previous month', nextM:'Next month', dow:['M','T','W','T','F','S','S'], tz:'Moldova time (Chișinău)', barTime:'Pick a time', barForm:'Your details', backCal:'Back to calendar', backSlots:'Back to times', fName:'Full name', fPhone:'Phone', fEmail:'Email', fType:'Meeting type', fDomain:'Legal area', fNotes:'Details (optional)', phName:'John Smith', phEmail:'email@example.com', phNotes:'Briefly describe the legal matter you need help with…', types:['Phone call','Video (online)','At the office'], domSelect:'Select…', domains:['Criminal law','Civil law','Family law','Commercial law','Administrative law','Labour law','Real estate & property','Other'], submit:'Confirm booking', sending:'Sending…', doneH:'Booking confirmed', doneMsg:'Your consultation is booked. A lawyer will call you to confirm the details.', noSlots:'No more times available on this day.<br>Please choose another date.', errLoad:'Could not load available times.<br>Please call +373 60 300 165.', errName:'Please enter your full name.', errPhone:'Please enter your phone number.', errTime:'Please select a time.', errSubmit:'The booking could not be completed: {e}. Please call +373 60 300 165.' },
+    ru: { locale:'ru-RU', h:'Выберите дату', lead:'Юридическая консультация — выберите длительность', dur:['30 мин','1 час','2 часа'], durAria:'Длительность консультации', prevM:'Предыдущий месяц', nextM:'Следующий месяц', dow:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'], tz:'Время Молдовы (Кишинёв)', barTime:'Выберите время', barForm:'Ваши данные', backCal:'Назад к календарю', backSlots:'Назад ко времени', fName:'Полное имя', fPhone:'Телефон', fEmail:'Эл. почта', fType:'Тип встречи', fDomain:'Область права', fNotes:'Детали (необязательно)', phName:'Иван Иванов', phEmail:'email@example.com', phNotes:'Кратко опишите юридический вопрос, с которым нужна помощь…', types:['Телефонный звонок','Видео (онлайн)','В офисе'], domSelect:'Выберите…', domains:['Уголовное право','Гражданское право','Семейное право','Коммерческое право','Административное право','Трудовое право','Недвижимость и собственность','Другое'], submit:'Подтвердить запись', sending:'Отправка…', doneH:'Запись подтверждена', doneMsg:'Ваша консультация забронирована. Юрист свяжется с вами по телефону для подтверждения деталей.', noSlots:'На этот день больше нет свободного времени.<br>Пожалуйста, выберите другую дату.', errLoad:'Не удалось загрузить доступное время.<br>Пожалуйста, позвоните +373 60 300 165.', errName:'Пожалуйста, введите полное имя.', errPhone:'Пожалуйста, введите номер телефона.', errTime:'Пожалуйста, выберите время.', errSubmit:'Не удалось завершить запись: {e}. Пожалуйста, позвоните +373 60 300 165.' },
+    it: { locale:'it-IT', h:'Scegli una data', lead:'Consulenza legale — scegli la durata', dur:['30 min','1 ora','2 ore'], durAria:'Durata della consulenza', prevM:'Mese precedente', nextM:'Mese successivo', dow:['L','M','M','G','V','S','D'], tz:'Ora della Moldova (Chișinău)', barTime:'Scegli l\'ora', barForm:'I tuoi dati', backCal:'Torna al calendario', backSlots:'Torna agli orari', fName:'Nome completo', fPhone:'Telefono', fEmail:'Email', fType:'Tipo di incontro', fDomain:'Ambito giuridico', fNotes:'Dettagli (facoltativo)', phName:'Mario Rossi', phEmail:'email@esempio.com', phNotes:'Descrivi brevemente la questione legale per cui hai bisogno di assistenza…', types:['Telefonica','Video (online)','In studio'], domSelect:'Seleziona…', domains:['Diritto penale','Diritto civile','Diritto di famiglia','Diritto commerciale','Diritto amministrativo','Diritto del lavoro','Immobiliare e proprietà','Altro'], submit:'Conferma la prenotazione', sending:'Invio in corso…', doneH:'Prenotazione confermata', doneMsg:'La tua consulenza è prenotata. Un avvocato ti chiamerà per confermare i dettagli.', noSlots:'Non ci sono più orari disponibili in questo giorno.<br>Scegli un\'altra data.', errLoad:'Impossibile caricare gli orari disponibili.<br>Chiama il +373 60 300 165.', errName:'Inserisci il nome completo.', errPhone:'Inserisci il numero di telefono.', errTime:'Seleziona un orario.', errSubmit:'Impossibile completare la prenotazione: {e}. Chiama il +373 60 300 165.' },
+    fr: { locale:'fr-FR', h:'Choisissez une date', lead:'Consultation juridique — choisissez la durée', dur:['30 min','1 heure','2 heures'], durAria:'Durée de la consultation', prevM:'Mois précédent', nextM:'Mois suivant', dow:['L','M','M','J','V','S','D'], tz:'Heure de Moldavie (Chișinău)', barTime:'Choisissez l\'heure', barForm:'Vos coordonnées', backCal:'Retour au calendrier', backSlots:'Retour aux horaires', fName:'Nom complet', fPhone:'Téléphone', fEmail:'E-mail', fType:'Type de rendez-vous', fDomain:'Domaine juridique', fNotes:'Détails (facultatif)', phName:'Jean Dupont', phEmail:'email@exemple.com', phNotes:'Décrivez brièvement la question juridique pour laquelle vous avez besoin d\'aide…', types:['Téléphone','Vidéo (en ligne)','Au bureau'], domSelect:'Sélectionnez…', domains:['Droit pénal','Droit civil','Droit de la famille','Droit commercial','Droit administratif','Droit du travail','Immobilier et propriété','Autre'], submit:'Confirmer le rendez-vous', sending:'Envoi…', doneH:'Rendez-vous confirmé', doneMsg:'Votre consultation est réservée. Un avocat vous appellera pour confirmer les détails.', noSlots:'Plus aucun horaire disponible ce jour-là.<br>Veuillez choisir une autre date.', errLoad:'Impossible de charger les horaires disponibles.<br>Veuillez appeler le +373 60 300 165.', errName:'Veuillez saisir votre nom complet.', errPhone:'Veuillez saisir votre numéro de téléphone.', errTime:'Veuillez sélectionner un horaire.', errSubmit:'Le rendez-vous n\'a pas pu être finalisé : {e}. Veuillez appeler le +373 60 300 165.' }
+  };
+  var LANG = (document.documentElement.getAttribute('lang') || window.__PAGE_LANG__ || 'ro').slice(0, 2).toLowerCase();
+  if (!L[LANG]) LANG = 'ro';
+  var X = L[LANG];
+  var LOCALE = X.locale;
+
+  var cal = { y:0, m:0 };
+  var sel = { date:null, start:null, end:null };
+  var busy = [];
+  var duration = 60; // minutes — chosen on the calendar panel
+
+  var elMonth = document.getElementById('cly-month');
+  var elDays  = document.getElementById('cly-days');
+  var elSlots = document.getElementById('cly-slots');
+
+  var now = new Date();
+  cal.y = now.getFullYear(); cal.m = now.getMonth();
+  renderCal();
+
+  document.getElementById('cly-prev').onclick = function () { shift(-1); };
+  document.getElementById('cly-next').onclick = function () { shift(1); };
+  document.getElementById('cly-back-cal').onclick = function () { step('cal'); };
+  document.getElementById('cly-back-slots').onclick = function () { step('slots'); };
+  document.getElementById('cly-form').addEventListener('submit', submit);
+
+  var durBtns = [].slice.call(document.querySelectorAll('#cly-dur button'));
+  durBtns.forEach(function (b) {
+    b.onclick = function () {
+      durBtns.forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      duration = parseInt(b.getAttribute('data-min'), 10);
+    };
+  });
+
+  localize();
+
+  function localize() {
+    [].forEach.call(document.querySelectorAll('#cly [data-t]'), function (el) {
+      var k = el.getAttribute('data-t'); if (X[k] != null) el.textContent = X[k];
+    });
+    [].forEach.call(document.querySelectorAll('#cly [data-tp]'), function (el) {
+      var k = el.getAttribute('data-tp'); if (X[k] != null) el.setAttribute('placeholder', X[k]);
+    });
+    [].forEach.call(document.querySelectorAll('#cly [data-ta]'), function (el) {
+      var k = el.getAttribute('data-ta'); if (X[k] != null) el.setAttribute('aria-label', X[k]);
+    });
+    var dow = document.querySelectorAll('#cly-dow span');
+    for (var i = 0; i < dow.length && i < X.dow.length; i++) dow[i].textContent = X.dow[i];
+    durBtns.forEach(function (b, j) { if (X.dur[j]) b.textContent = X.dur[j]; });
+    document.getElementById('cly-type').innerHTML = TYPE_VALS.map(function (v, j) {
+      return '<option value="' + v + '">' + X.types[j] + '</option>';
+    }).join('');
+    document.getElementById('cly-domain').innerHTML = '<option value="">' + X.domSelect + '</option>' +
+      DOM_VALS.map(function (v, j) { return '<option value="' + v + '">' + X.domains[j] + '</option>'; }).join('');
   }
 
-  // Theme the widget to match the navy contact card.
-  var sep = CALENDLY_URL.indexOf('?') === -1 ? '?' : '&';
-  var themed = CALENDLY_URL + sep +
-    'hide_gdpr_banner=1&background_color=0d1b35&text_color=ffffff&primary_color=ffffff';
-
-  var widget = document.createElement('div');
-  widget.className = 'calendly-inline-widget';
-  widget.setAttribute('data-url', themed);
-  widget.style.minWidth = '320px';
-  widget.style.height = '680px';
-  mount.appendChild(widget);
-
-  if (!document.querySelector('link[href*="assets.calendly.com"]')) {
-    var css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = 'https://assets.calendly.com/assets/external/widget.css';
-    document.head.appendChild(css);
+  function shift(d) { cal.m += d; if (cal.m > 11) { cal.m = 0; cal.y++; } if (cal.m < 0) { cal.m = 11; cal.y--; } renderCal(); }
+  var TZ = 'Europe/Chisinau';
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function ymd(dt) { return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()); }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  // Offset (ms) between a UTC instant and Chișinău wall-clock at that instant.
+  function tzOffset(date) {
+    var f = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    var p = {}; f.formatToParts(date).forEach(function (x) { p[x.type] = x.value; });
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - date.getTime();
   }
-  if (window.Calendly) {
-    window.Calendly.initInlineWidgets();
-  } else if (!document.querySelector('script[src*="assets.calendly.com/assets/external/widget.js"]')) {
-    var js = document.createElement('script');
-    js.src = 'https://assets.calendly.com/assets/external/widget.js';
-    js.async = true;
-    document.body.appendChild(js);
+  // Absolute instant for a Chișinău wall-clock date & hour, independent of the visitor's timezone.
+  function chisinau(y, m, d, h, min) {
+    var guess = Date.UTC(y, m, d, h, min || 0, 0);
+    return new Date(guess - tzOffset(new Date(guess)));
+  }
+  // Format an instant as Chișinău HH:MM.
+  function hm(date) {
+    return new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+  }
+  function dropYearMark(s) { return s.replace(/\s*г\.\s*$/, ''); } // Russian Intl appends " г."
+  // Localized "Month YYYY" (first letter capitalized).
+  function monthLabel(y, m) {
+    var s = dropYearMark(new Intl.DateTimeFormat(LOCALE, { month: 'long', year: 'numeric' }).format(new Date(y, m, 1)));
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  // Localized "Weekday, D Month YYYY" for a calendar day (built at local noon to avoid tz day-shift).
+  function dateLong(y, m, d) {
+    return dropYearMark(new Intl.DateTimeFormat(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(y, m, d, 12)));
+  }
+  function longLabel() {
+    return cap(dateLong(sel.date.getFullYear(), sel.date.getMonth(), sel.date.getDate())) +
+      ' · ' + hm(sel.start) + '–' + hm(sel.end);
+  }
+
+  function renderCal() {
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var max = new Date(today); max.setDate(today.getDate() + WINDOW_DAYS);
+    elMonth.textContent = monthLabel(cal.y, cal.m);
+    document.getElementById('cly-prev').disabled = (cal.y === today.getFullYear() && cal.m === today.getMonth());
+    elDays.innerHTML = '';
+    var first = new Date(cal.y, cal.m, 1).getDay();
+    var offset = (first + 6) % 7;               // Monday-first
+    var dim = new Date(cal.y, cal.m + 1, 0).getDate();
+    var i;
+    for (i = 0; i < offset; i++) {
+      var e = document.createElement('div'); e.className = 'cly-day-cell';
+      e.innerHTML = '<span class="cly-day empty"></span>'; elDays.appendChild(e);
+    }
+    for (var d = 1; d <= dim; d++) {
+      var dt = new Date(cal.y, cal.m, d);
+      var open = !!HOURS[dt.getDay()];
+      var blocked = dt < today || dt > max || !open;
+      var isToday = dt.getTime() === today.getTime();
+      var cell = document.createElement('div'); cell.className = 'cly-day-cell';
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = d;
+      b.className = 'cly-day' + (isToday ? ' today' : '') + (blocked ? ' off' : '');
+      b.setAttribute('aria-label', dateLong(cal.y, cal.m, d));
+      if (blocked) { b.disabled = true; }
+      else { (function (dd) { b.onclick = function () { pickDate(dd); }; })(d); }
+      cell.appendChild(b); elDays.appendChild(cell);
+    }
+  }
+
+  function pickDate(d) {
+    sel.date = new Date(cal.y, cal.m, d); sel.start = null; sel.end = null;
+    document.getElementById('cly-slots-date').textContent = cap(dateLong(cal.y, cal.m, d));
+    elSlots.innerHTML = '<div class="cly-loading"><span class="cly-spin"></span></div>';
+    step('slots');
+    var ds = ymd(sel.date);
+    fetch(GAS_URL + '?token=' + SECRET + '&start=' + ds + '&end=' + ds)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) throw new Error(data.error);
+        busy = data.busy || [];
+        renderSlots();
+      })
+      .catch(function () {
+        elSlots.innerHTML = '<div class="cly-slots-err">' + X.errLoad + '</div>';
+      });
+  }
+
+  function renderSlots() {
+    var hrs = HOURS[sel.date.getDay()];
+    var openM = hrs[0] * 60, closeM = hrs[1] * 60;
+    var step = duration === 30 ? 30 : 60;
+    var minStart = new Date(Date.now() + LEAD_H * 3600000); // earliest bookable: 2h from now (also excludes past hours)
+    var out = [];
+    for (var t = openM; t + duration <= closeM; t += step) {
+      var s = chisinau(sel.date.getFullYear(), sel.date.getMonth(), sel.date.getDate(), Math.floor(t / 60), t % 60);
+      var e = new Date(s.getTime() + duration * 60000);
+      var soon = s < minStart;
+      var taken = busy.some(function (b) { var bs = new Date(b.start), be = new Date(b.end); return s < be && e > bs; });
+      if (!soon && !taken) out.push({ s: s, e: e });
+    }
+    if (!out.length) {
+      elSlots.innerHTML = '<div class="cly-slots-empty">' + X.noSlots + '</div>';
+      return;
+    }
+    elSlots.innerHTML = '';
+    out.forEach(function (sl) {
+      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'cly-slot'; btn.textContent = hm(sl.s);
+      btn.onclick = function () { sel.start = sl.s; sel.end = sl.e; goForm(); };
+      elSlots.appendChild(btn);
+    });
+  }
+
+  function goForm() {
+    document.querySelector('#cly-when span').textContent = longLabel();
+    step('form');
+  }
+
+  function step(name) {
+    ['cal', 'slots', 'form', 'done'].forEach(function (s) {
+      document.getElementById('cly-step-' + s).classList.toggle('active', s === name);
+    });
+  }
+
+  function showErr(m) { var el = document.getElementById('cly-err'); el.textContent = m; el.style.display = 'block'; }
+
+  function submit(ev) {
+    ev.preventDefault();
+    document.getElementById('cly-err').style.display = 'none';
+    var name = document.getElementById('cly-name').value.trim();
+    var phone = document.getElementById('cly-phone').value.trim();
+    if (!name)  { showErr(X.errName); return; }
+    if (!phone) { showErr(X.errPhone); return; }
+    if (!sel.start) { showErr(X.errTime); return; }
+
+    var btn = document.getElementById('cly-submit'), orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="cly-spin" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span> ' + X.sending;
+
+    var payload = {
+      token: SECRET, name: name, phone: phone,
+      email: document.getElementById('cly-email').value.trim(),
+      meetingType: document.getElementById('cly-type').value,
+      domain: document.getElementById('cly-domain').value,
+      notes: document.getElementById('cly-notes').value.trim(),
+      start: sel.start.toISOString(), end: sel.end.toISOString()
+    };
+
+    fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) throw new Error(data.error);
+        document.querySelector('#cly-done-when span').textContent = longLabel();
+        document.getElementById('cly-done-msg').textContent = X.doneMsg;
+        step('done');
+      })
+      .catch(function (e2) {
+        showErr(X.errSubmit.replace('{e}', (e2.message || 'error')));
+        btn.disabled = false; btn.innerHTML = orig;
+      });
   }
 })();
 </script>
