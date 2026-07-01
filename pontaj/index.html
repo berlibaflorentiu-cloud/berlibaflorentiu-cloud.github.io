@@ -639,7 +639,7 @@
     }
     .modal-head {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       padding: 20px 28px;
       border-bottom: 1px solid var(--border);
@@ -648,7 +648,7 @@
       background: var(--surface);
       z-index: 1;
     }
-    .modal-head-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+    .modal-head-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--gold); white-space: normal; overflow-wrap: break-word; min-width: 0; }
     .modal-actions { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
     .report-body { padding: 32px 36px; position: relative; }
 
@@ -2309,7 +2309,7 @@ function renderClienti(container) {
                     onmouseover="this.style.color='#e05c5c';this.style.background='rgba(224,92,92,.12)'"
                     onmouseout="this.style.color='var(--muted)';this.style.background='none'">✕</button>
                 </div>
-                <div class="lsc-name" style="padding-right:60px;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold);letter-spacing:-.01em">${esc(dispName)}</div>
+                <div class="lsc-name" style="padding-right:84px;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold);letter-spacing:-.01em">${esc(dispName)}</div>
                 <div class="lsc-contract" style="font-size:12px;color:var(--muted);margin-top:2px;margin-bottom:10px;line-height:1.4">${c.notes ? esc(c.notes) : '—'}</div>
                 <div class="lsc-row"><span>Intrări</span><span>${cnt}</span></div>
                 <div class="lsc-row"><span>Facturi</span><span>${invCt}</span></div>
@@ -3501,10 +3501,12 @@ function showClientReceipts(clientId, event) {
   const totalBaza = receipts.reduce((s, r) => s + (Number(r.plata_baza) || 0), 0);
   const totalComp = receipts.reduce((s, r) => s + (Number(r.compensare) || 0), 0);
 
-  document.getElementById('modal-title').textContent = c.name;
-  document.getElementById('modal-actions').innerHTML = `
-    ${c.notes ? `<span style="font-size:12px;color:var(--muted);font-weight:400;margin-right:4px">${esc(c.notes)}</span>` : ''}
-    <button class="btn-ghost" onclick="closeModal()">✕</button>`;
+  const dispModalName = c.name.replace(/\s*-\s*FINALIZAT\s*$/i, '').trim();
+  document.getElementById('modal-title').innerHTML = `
+    <div>${esc(dispModalName)}</div>
+    ${c.notes ? `<div style="font-size:13px;font-weight:400;color:var(--muted);margin-top:3px;font-family:inherit">${esc(c.notes)}</div>` : ''}
+  `;
+  document.getElementById('modal-actions').innerHTML = `<button class="btn-ghost" onclick="closeModal()">✕</button>`;
 
   document.getElementById('modal-body').innerHTML = receipts.length === 0
     ? `<div class="empty-state" style="padding:40px 20px"><p>Nicio chitanță înregistrată pentru acest client.</p></div>`
