@@ -2303,7 +2303,7 @@ function renderClienti(container) {
               ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
               : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>`;
             return `
-              <div class="lsc" data-client-id="${c.id}" style="cursor:pointer;${done ? 'background:rgba(100,28,28,.13);border:1px solid rgba(150,55,55,.3);border-left:4px solid rgba(160,60,60,.6)' : ''}" onclick="showClientReceipts('${c.id}', event)">
+              <div class="lsc" data-client-id="${c.id}" style="cursor:pointer;${done ? 'background:rgba(100,28,28,.13);border:1px solid rgba(150,55,55,.3);border-left:4px solid rgba(160,60,60,.6)' : 'background:rgba(200,169,110,.05);border:1px solid rgba(200,169,110,.18);border-left:4px solid rgba(200,169,110,.5)'}" onclick="showClientReceipts('${c.id}', event)">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;min-height:24px">
                   ${done ? `<div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9b5050;font-weight:600">Finalizat</div>` : '<div></div>'}
                   <div class="lsc-actions" style="display:flex;gap:4px;align-items:center;flex-shrink:0">
